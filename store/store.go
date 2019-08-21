@@ -7,16 +7,33 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/undeconstructed/sample/common"
 )
 
 type Store interface {
-	Start() error
-	Stop()
+	common.Service
 }
 
 func New(port int) Store {
+	feeds := map[string]common.StoreFeed{}
+
+	// dummy data
+	feed1 := common.StoreFeed{
+		ID: "feed1",
+		Articles: []common.StoreArticle{
+			{
+				ID:   "1",
+				Date: "1",
+				Body: "this is article 1",
+			},
+		},
+	}
+	feeds[feed1.ID] = feed1
+
 	return &store{
-		port: port,
+		port:  port,
+		feeds: feeds,
 	}
 }
 
@@ -25,6 +42,7 @@ type store struct {
 	stopped chan bool
 	stop    context.CancelFunc
 	srv     http.Server
+	feeds   map[string]common.StoreFeed
 }
 
 func (a *store) Start() error {
@@ -33,7 +51,10 @@ func (a *store) Start() error {
 	a.stop = cancel
 
 	router := gin.Default()
-	router.GET("/", a.get1)
+	router.POST("/feeds/:fid", a.postFeed)
+	router.GET("/feeds/:fid", a.getFeed)
+	router.PUT("/feeds/:fid/article/:aid", a.putArticle)
+	router.GET("/feeds/:fid/article/:aid", a.getArticle)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
@@ -59,7 +80,26 @@ func (a *store) Start() error {
 	return nil
 }
 
-func (a *store) get1(c *gin.Context) {
+func (a *store) postFeed(c *gin.Context) {
+	in := common.InputFeed{}
+	err := c.Bind(&in)
+	if err != nil {
+		return
+	}
+	c.JSON(http.StatusOK, in)
+}
+
+func (a *store) getFeed(c *gin.Context) {
+	fid := c.Param("fid")
+	feed := a.feeds[fid]
+	c.JSON(http.StatusOK, feed)
+}
+
+func (a *store) putArticle(c *gin.Context) {
+	c.String(http.StatusOK, "ok")
+}
+
+func (a *store) getArticle(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
 }
 

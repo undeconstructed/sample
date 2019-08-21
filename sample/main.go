@@ -5,26 +5,23 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/undeconstructed/sample/common"
 	"github.com/undeconstructed/sample/config"
 	"github.com/undeconstructed/sample/fetcher"
 	"github.com/undeconstructed/sample/frontend"
 	"github.com/undeconstructed/sample/store"
 )
 
-type Service interface {
-	Start() error
-	Stop()
-}
-
+// testService is just a hacky way to start all the services in one process.
 type testService struct {
-	services []Service
+	services []common.Service
 }
 
 func makeTestService() *testService {
 	return &testService{
-		services: []Service{
+		services: []common.Service{
 			config.New(8001, "localhost:8002"),
-			fetcher.New(),
+			fetcher.New("localhost:8001"),
 			frontend.New(8088, "localhost:8001"),
 			store.New(8002),
 		},
@@ -50,7 +47,7 @@ func (ts *testService) Stop() {
 func main() {
 	comp := os.Args[1]
 
-	var service Service
+	var service common.Service
 
 	switch comp {
 	case "test":
@@ -60,7 +57,7 @@ func main() {
 	case "frontend":
 		service = frontend.New(8080, os.Args[2])
 	case "fetcher":
-		service = fetcher.New()
+		service = fetcher.New(os.Args[2])
 	case "store":
 		service = store.New(8082)
 	default:
@@ -76,7 +73,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("ok")
+	fmt.Println("Started")
 
 	s := <-c
 	fmt.Println("Got signal:", s)

@@ -3,27 +3,47 @@ package fetcher
 import (
 	"fmt"
 	"time"
+
+	resty "github.com/go-resty/resty/v2"
+
+	"github.com/undeconstructed/sample/common"
 )
 
 type Fetcher interface {
-	Start() error
-	Stop()
+	common.Service
 }
 
-func New() Fetcher {
-	return &fetcher{}
+func New(configURL string) Fetcher {
+	return &fetcher{configURL: configURL}
 }
 
 type fetcher struct {
+	configURL string
 }
 
 func (a *fetcher) Start() error {
+	work := common.FetchWork{}
+
+	client := resty.New()
+	resp, err := client.R().EnableTrace().
+		SetResult(&work).
+		Get("http://" + a.configURL + "/work")
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("work: %v\n", resp)
+
 	go func() {
 		for {
-			fmt.Printf("fetch time!\n")
+			for _, j := range work.Jobs {
+				fmt.Printf("Fetching %s\n", j.URL)
+			}
 			time.Sleep(10 * time.Second)
 		}
 	}()
+
 	return nil
 }
 

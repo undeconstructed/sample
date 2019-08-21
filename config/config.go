@@ -7,30 +7,27 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/undeconstructed/sample/common"
 )
 
 type Config interface {
-	Start() error
-	Stop()
+	common.Service
 }
 
 func New(port int, store string) Config {
 	a := &config{
 		port:    port,
 		store:   store,
-		sources: map[string]sourceCfg{},
+		sources: map[string]common.SourceConfig{},
 	}
 
 	// dummy date
-	a.sources["bbc"] = sourceCfg{
-		url: "http://bbc.something",
+	a.sources["bbc"] = common.SourceConfig{
+		URL: "http://bbc.something",
 	}
 
 	return a
-}
-
-type sourceCfg struct {
-	url string
 }
 
 type config struct {
@@ -40,7 +37,7 @@ type config struct {
 	srv     http.Server
 
 	store   string
-	sources map[string]sourceCfg
+	sources map[string]common.SourceConfig
 }
 
 func (a *config) Start() error {
@@ -49,9 +46,9 @@ func (a *config) Start() error {
 	a.stop = cancel
 
 	router := gin.Default()
-	router.GET("/sources", a.getSites)
-	router.GET("/sources/:id", a.getSite)
-	router.PUT("/sources/:id", a.putSite)
+	router.GET("/sources", a.getSources)
+	router.PUT("/sources/:id", a.putSource)
+	router.GET("/sources/:id", a.getSource)
 
 	router.GET("/work", a.getWork)
 
@@ -79,20 +76,34 @@ func (a *config) Start() error {
 	return nil
 }
 
-func (a *config) getSites(c *gin.Context) {
+func (a *config) getSources(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
 }
 
-func (a *config) getSite(c *gin.Context) {
+func (a *config) putSource(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
 }
 
-func (a *config) putSite(c *gin.Context) {
+func (a *config) getSource(c *gin.Context) {
 	c.String(http.StatusOK, "ok")
 }
 
 func (a *config) getWork(c *gin.Context) {
-	c.String(http.StatusOK, "ok")
+	jobs := []common.FetchJob{}
+
+	for i, s := range a.sources {
+		jobs = append(jobs, common.FetchJob{
+			ID:    i,
+			URL:   s.URL,
+			Store: a.store,
+		})
+	}
+
+	out := common.FetchWork{
+		Jobs: jobs,
+	}
+
+	c.JSON(http.StatusOK, out)
 }
 
 func (a *config) Stop() {
