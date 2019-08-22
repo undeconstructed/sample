@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	resty "github.com/go-resty/resty/v2"
@@ -51,10 +52,30 @@ func (a *server) Start() error {
 		Handler: router,
 	}
 
+	// server in new goroutine
 	go func() {
 		a.srv.Serve(l)
 	}()
 
+	// updater in new goroutine
+	go func() {
+		// could update on request instead, of course
+		for {
+			a.updateSources()
+			a.doPurge()
+			a.doUpdate()
+			t := time.After(10 * time.Second)
+			select {
+			case <-t:
+				continue
+			case <-ctx.Done():
+				fmt.Println("Fetcher stopping")
+				break
+			}
+		}
+	}()
+
+	// server must be stopped from another routine
 	go func() {
 		<-ctx.Done()
 		fmt.Println("Frontend stopping")
@@ -64,6 +85,18 @@ func (a *server) Start() error {
 	}()
 
 	return nil
+}
+
+func (a *server) updateSources() {
+	// find out what sources exist
+}
+
+func (a *server) doPurge() {
+	// get rid of old things
+}
+
+func (a *server) doUpdate() {
+	// get any new articles from the store
 }
 
 func (a *server) getFeed(c *gin.Context) {

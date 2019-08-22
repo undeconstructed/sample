@@ -11,6 +11,11 @@ type SourceConfig struct {
 	URL string `json:"url"`
 }
 
+// SourcesConfig is a list of sources
+type SourcesConfig struct {
+	Sources []string `json:"sources"`
+}
+
 // FetchJob tells a fetcher to do something.
 type FetchJob struct {
 	ID    string `json:"id"`

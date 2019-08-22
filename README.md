@@ -21,7 +21,7 @@ curl -X POST -v -H 'content-type: application/json' 'localhost:8002/feeds/feed1'
 
 ## frontend
 
-serves api - always on.
+serves api - always on. could cache all the recent articles probably.
 
 REST. could do this?
 
@@ -44,11 +44,11 @@ But then again, does the app actually access the resources, or just a view of th
 
 gets from sources - runs whenever.
 
-on a loop asks the config server what it should fetch.
+on a loop asks the config server what it should fetch, then fetches.
 
 ## store
 
-accepts from fetcher, serves to frontend.
+accepts from fetcher, serves to frontend. basically just a dumb store.
 
 ```
 /feeds/id
@@ -61,4 +61,4 @@ accepts from fetcher, serves to frontend.
 
 ## config
 
-just config server.
+just config server. accepts sources, remembers them, shares the list with the frontend, gives instructions to the fetcher.

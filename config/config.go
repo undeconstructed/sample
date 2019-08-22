@@ -26,6 +26,9 @@ func New(port int, store string) Config {
 	a.sources["bbc"] = common.SourceConfig{
 		URL: "http://bbc.something",
 	}
+	a.sources["itv"] = common.SourceConfig{
+		URL: "http://itv.thing",
+	}
 
 	return a
 }
@@ -77,7 +80,15 @@ func (a *config) Start() error {
 }
 
 func (a *config) getSources(c *gin.Context) {
-	c.String(http.StatusOK, "ok")
+	sources := []string{}
+
+	for i := range a.sources {
+		sources = append(sources, i)
+	}
+
+	c.JSON(http.StatusOK, common.SourcesConfig{
+		Sources: sources,
+	})
 }
 
 func (a *config) putSource(c *gin.Context) {
@@ -99,11 +110,9 @@ func (a *config) getWork(c *gin.Context) {
 		})
 	}
 
-	out := common.FetchWork{
+	c.JSON(http.StatusOK, common.FetchWork{
 		Jobs: jobs,
-	}
-
-	c.JSON(http.StatusOK, out)
+	})
 }
 
 func (a *config) Stop() {

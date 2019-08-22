@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -19,33 +20,48 @@ func New(configURL string) Fetcher {
 
 type fetcher struct {
 	configURL string
+	stop      context.CancelFunc
 }
 
 func (a *fetcher) Start() error {
-	work := common.FetchWork{}
-
-	client := resty.New()
-	resp, err := client.R().EnableTrace().
-		SetResult(&work).
-		Get("http://" + a.configURL + "/work")
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("work: %v\n", resp)
+	ctx, cancel := context.WithCancel(context.Background())
+	a.stop = cancel
 
 	go func() {
 		for {
-			for _, j := range work.Jobs {
-				fmt.Printf("Fetching %s\n", j.URL)
+			a.doFetch()
+			t := time.After(10 * time.Second)
+			select {
+			case <-t:
+				continue
+			case <-ctx.Done():
+				fmt.Println("Fetcher stopping")
+				break
 			}
-			time.Sleep(10 * time.Second)
 		}
 	}()
 
 	return nil
 }
 
+func (a *fetcher) doFetch() {
+	work := common.FetchWork{}
+
+	client := resty.New()
+	_, err := client.R().
+		SetResult(&work).
+		Get("http://" + a.configURL + "/work")
+
+	if err != nil {
+		fmt.Printf("Error fetching work list: %v\n", err)
+		return
+	}
+
+	for _, j := range work.Jobs {
+		fmt.Printf("Fetching %s\n", j.URL)
+	}
+}
+
 func (a *fetcher) Stop() {
+	a.stop()
 }
