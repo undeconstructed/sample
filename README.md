@@ -5,9 +5,13 @@ Thought I'd try out gin this time.
 
 Because it's microservices I've spent time on boilerplate and not really done much implementation, and so there's very little interesting Go code.
 
+It also doesn't actually do anything, since I haven't yet got to parsing the input feeds, or storing the results.
+
+I'll probably carry on a bit, since it's actually not a bad project to try out some microservice ideas on.
+
 ## sample
 
-single binary project that can launch as any component, or all.
+Single binary project that can launch as any component, or all.
 
 `go install github.com/undeconstructed/sample/sample && sample test`
 
@@ -21,34 +25,35 @@ curl -X POST -v -H 'content-type: application/json' 'localhost:8002/feeds/feed1'
 
 ## frontend
 
-serves api - always on. could cache all the recent articles probably.
+Serves REST API - always on, can run any number of them. Caches all recent articles, updating on a timer.
 
-REST. could do this?
+The API could be like this.
 
 ```
 /feeds/
-/feed/id/
+/feeds/id/
 /feeds/id/items/
 /feeds/id/items/id
 /feeds/id/items/id?in=html
 ```
 
-But then again, does the app actually access the resources, or just a view of them? Frankly it could be just:
+But then again, does the client actually access the resources, or just a view of them? Frankly it could be just:
 
 ```
 /feed?query=q&from=token
-/article/id
 ```
+
+Where `/feed` represents a single resource that generates a feed from internal resources.
 
 ## fetcher
 
-gets from sources - runs whenever.
+Fetches from sources - runs whenever, can fail at any time without causing problems. Could also be turned into a per-task process, although that would make it harder to remember the state as of the last-fetch of a source.
 
-on a loop asks the config server what it should fetch, then fetches.
+Currently it asks the config server what it should fetch, then fetches, then go back to the start.
 
 ## store
 
-accepts from fetcher, serves to frontend. basically just a dumb store.
+Accepts from fetcher, serves to frontend - basically just a dumb store. Can fail for short periods, as the frontend is able to continue running without it.
 
 ```
 /feeds/id
@@ -61,4 +66,4 @@ accepts from fetcher, serves to frontend. basically just a dumb store.
 
 ## config
 
-just config server. accepts sources, remembers them, shares the list with the frontend, gives instructions to the fetcher.
+Config server. accepts sources, remembers them, shares the list with the frontend, gives instructions to the fetcher. Can fail for short periods, as the frontend is able to continue running without it.
