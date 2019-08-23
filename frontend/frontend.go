@@ -21,12 +21,21 @@ type Frontend interface {
 
 // New makes a new Frontend
 func New(port int, configURL string) Frontend {
-	a := &server{
+	articles := []common.OutputArticle{
+		common.OutputArticle{
+			Source: "bbc",
+			ID:     "1",
+			Date:   "1",
+			Body:   "this is a dummy article",
+		},
+	}
+
+	return &server{
 		port:      port,
 		configURL: configURL,
 		sources:   common.SourcesConfig{},
+		articles:  articles,
 	}
-	return a
 }
 
 type server struct {
@@ -38,6 +47,8 @@ type server struct {
 	client     *resty.Client
 	sources    common.SourcesConfig
 	lastUpdate time.Time
+	// article index (with full data)
+	articles []common.OutputArticle
 }
 
 func (a *server) Start() error {
@@ -132,6 +143,7 @@ func (a *server) updateFeeds(since time.Time) {
 			continue
 		}
 
+		// TODO - create new index
 		fmt.Printf("Updated: %v\n", feed)
 	}
 }
@@ -139,10 +151,14 @@ func (a *server) updateFeeds(since time.Time) {
 func (a *server) getFeed(c *gin.Context) {
 	query := c.Query("query")
 	from := c.Query("from")
+
+	// TODO - selecting articles
 	out := common.OutputFeed{
-		Query: query,
-		Next:  from + "+1",
+		Query:    query,
+		Next:     from + "plus",
+		Articles: a.articles,
 	}
+
 	c.JSON(http.StatusOK, out)
 }
 

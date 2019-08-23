@@ -55,7 +55,15 @@ type InputFeed struct {
 
 // OutputFeed is how the frontend serves data.
 type OutputFeed struct {
-	Query    string         `json:"query"`
-	Next     string         `json:"next"`
-	Articles []StoreArticle `json:"articles"`
+	Query    string          `json:"query"`
+	Next     string          `json:"next"`
+	Articles []OutputArticle `json:"articles"`
+}
+
+// OutputArticle is how the frontend presents articles
+type OutputArticle struct {
+	Source string `json:"source"`
+	ID     string `json:"id"`
+	Date   string `json:"date"`
+	Body   string `json:"body"`
 }

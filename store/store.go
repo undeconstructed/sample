@@ -18,7 +18,7 @@ type Store interface {
 func New(port int) Store {
 	feeds := map[string]common.StoreFeed{}
 
-	// dummy data
+	// dummy data, stored directly in its output format
 	feed1 := common.StoreFeed{
 		ID: "bbc",
 		Articles: []common.StoreArticle{
@@ -97,12 +97,14 @@ func (a *store) postFeed(c *gin.Context) {
 	if err != nil {
 		return
 	}
+	// TODO - insert any new articles into the store
 	c.JSON(http.StatusOK, in)
 }
 
 func (a *store) getFeed(c *gin.Context) {
 	fid := c.Param("fid")
 	// since := c.Query("since")
+	// TODO - selective fetching
 	feed := a.feeds[fid]
 	c.JSON(http.StatusOK, feed)
 }
