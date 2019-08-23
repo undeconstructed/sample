@@ -6,6 +6,7 @@ import (
 	"time"
 
 	resty "github.com/go-resty/resty/v2"
+	"github.com/mmcdole/gofeed"
 
 	"github.com/undeconstructed/sample/common"
 )
@@ -57,9 +58,24 @@ func (a *fetcher) doFetch() {
 		return
 	}
 
-	for _, j := range work.Jobs {
-		fmt.Printf("Fetching %s\n", j.URL)
+	for _, job := range work.Jobs {
+		fmt.Printf("Fetching %s\n", job.URL)
+		// a.fetchFeed(job)
+		// TODO - interpret and push to store
 	}
+}
+
+func (a *fetcher) fetchFeed(job common.FetchJob) {
+	// TODO - etag or similar
+	fp := gofeed.NewParser()
+	feed, err := fp.ParseURL(job.URL)
+
+	if err != nil {
+		fmt.Printf("Error fetching %s: %v\n", job.URL, err)
+		return
+	}
+
+	fmt.Printf("Fetched %s\n", feed.Title)
 }
 
 func (a *fetcher) Stop() {

@@ -24,7 +24,7 @@ func New(port int, store string) Config {
 
 	// dummy date
 	a.sources["bbc"] = common.SourceConfig{
-		URL:   "http://bbc.something",
+		URL:   "http://feeds.bbci.co.uk/news/uk/rss.xml",
 		Store: store,
 	}
 	a.sources["itv"] = common.SourceConfig{
