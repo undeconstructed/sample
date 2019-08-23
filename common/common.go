@@ -8,12 +8,19 @@ type Service interface {
 
 // SourceConfig to put new sources into config server.
 type SourceConfig struct {
-	URL string `json:"url"`
+	URL   string `json:"url"`
+	Store string `json:"store"`
+}
+
+// SourceConfig2 is a name that needs to be refactored.
+type SourceConfig2 struct {
+	ID    string `json:"id"`
+	Store string `json:"store"`
 }
 
 // SourcesConfig is a list of sources
 type SourcesConfig struct {
-	Sources []string `json:"sources"`
+	Sources []SourceConfig2 `json:"sources"`
 }
 
 // FetchJob tells a fetcher to do something.

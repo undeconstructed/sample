@@ -24,10 +24,12 @@ func New(port int, store string) Config {
 
 	// dummy date
 	a.sources["bbc"] = common.SourceConfig{
-		URL: "http://bbc.something",
+		URL:   "http://bbc.something",
+		Store: store,
 	}
 	a.sources["itv"] = common.SourceConfig{
-		URL: "http://itv.thing",
+		URL:   "http://itv.thing",
+		Store: store,
 	}
 
 	return a
@@ -80,10 +82,13 @@ func (a *config) Start() error {
 }
 
 func (a *config) getSources(c *gin.Context) {
-	sources := []string{}
+	sources := []common.SourceConfig2{}
 
-	for i := range a.sources {
-		sources = append(sources, i)
+	for i, s := range a.sources {
+		sources = append(sources, common.SourceConfig2{
+			ID:    i,
+			Store: s.Store,
+		})
 	}
 
 	c.JSON(http.StatusOK, common.SourcesConfig{

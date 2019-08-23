@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,17 +21,23 @@ type Frontend interface {
 
 // New makes a new Frontend
 func New(port int, configURL string) Frontend {
-	a := &server{port: port, configURL: configURL}
+	a := &server{
+		port:      port,
+		configURL: configURL,
+		sources:   common.SourcesConfig{},
+	}
 	return a
 }
 
 type server struct {
-	port      int
-	configURL string
-	stopped   chan bool
-	stop      context.CancelFunc
-	srv       http.Server
-	client    *resty.Client
+	port       int
+	configURL  string
+	stopped    chan bool
+	stop       context.CancelFunc
+	srv        http.Server
+	client     *resty.Client
+	sources    common.SourcesConfig
+	lastUpdate time.Time
 }
 
 func (a *server) Start() error {
@@ -61,9 +68,11 @@ func (a *server) Start() error {
 	go func() {
 		// could update on request instead, of course
 		for {
+			now := time.Now()
 			a.updateSources()
-			a.doPurge()
-			a.doUpdate()
+			a.purgeArticles(now)
+			a.updateFeeds(a.lastUpdate)
+			a.lastUpdate = now
 			t := time.After(10 * time.Second)
 			select {
 			case <-t:
@@ -89,14 +98,42 @@ func (a *server) Start() error {
 
 func (a *server) updateSources() {
 	// find out what sources exist
+	sources := common.SourcesConfig{}
+
+	_, err := a.client.R().
+		SetResult(&sources).
+		Get("http://" + a.configURL + "/sources/")
+
+	if err != nil {
+		fmt.Printf("Error fetching sources list: %v\n", err)
+		return
+	}
+
+	// atomic replace of whole list
+	a.sources = sources
 }
 
-func (a *server) doPurge() {
+func (a *server) purgeArticles(before time.Time) {
 	// get rid of old things
 }
 
-func (a *server) doUpdate() {
+func (a *server) updateFeeds(since time.Time) {
 	// get any new articles from the store
+
+	for _, s := range a.sources.Sources {
+		feed := common.StoreFeed{}
+		_, err := a.client.R().
+			SetQueryParam("since", strconv.FormatInt(since.Unix(), 10)).
+			SetResult(&feed).
+			Get("http://" + s.Store + "/feeds/" + s.ID)
+
+		if err != nil {
+			fmt.Printf("Error updating feed %s: %v\n", s.ID, err)
+			continue
+		}
+
+		fmt.Printf("Updated: %v\n", feed)
+	}
 }
 
 func (a *server) getFeed(c *gin.Context) {

@@ -20,16 +20,27 @@ func New(port int) Store {
 
 	// dummy data
 	feed1 := common.StoreFeed{
-		ID: "feed1",
+		ID: "bbc",
 		Articles: []common.StoreArticle{
 			{
 				ID:   "1",
 				Date: "1",
-				Body: "this is article 1",
+				Body: "this bbc is article 1",
 			},
 		},
 	}
 	feeds[feed1.ID] = feed1
+	feed2 := common.StoreFeed{
+		ID: "itv",
+		Articles: []common.StoreArticle{
+			{
+				ID:   "1",
+				Date: "1",
+				Body: "this is itv article 1",
+			},
+		},
+	}
+	feeds[feed2.ID] = feed2
 
 	return &store{
 		port:  port,
@@ -53,8 +64,8 @@ func (a *store) Start() error {
 	router := gin.Default()
 	router.POST("/feeds/:fid", a.postFeed)
 	router.GET("/feeds/:fid", a.getFeed)
-	router.PUT("/feeds/:fid/article/:aid", a.putArticle)
-	router.GET("/feeds/:fid/article/:aid", a.getArticle)
+	router.PUT("/feeds/:fid/articles/:aid", a.putArticle)
+	router.GET("/feeds/:fid/articles/:aid", a.getArticle)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
@@ -91,6 +102,7 @@ func (a *store) postFeed(c *gin.Context) {
 
 func (a *store) getFeed(c *gin.Context) {
 	fid := c.Param("fid")
+	// since := c.Query("since")
 	feed := a.feeds[fid]
 	c.JSON(http.StatusOK, feed)
 }
