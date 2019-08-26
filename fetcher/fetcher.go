@@ -22,11 +22,13 @@ func New(configURL string) Fetcher {
 type fetcher struct {
 	configURL string
 	stop      context.CancelFunc
+	client    *resty.Client
 }
 
 func (a *fetcher) Start() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	a.stop = cancel
+	a.client = resty.New()
 
 	go func() {
 		for {
@@ -34,10 +36,12 @@ func (a *fetcher) Start() error {
 			t := time.After(10 * time.Second)
 			select {
 			case <-t:
-				continue
+				// continue
+				// only one fetch just now
+				return
 			case <-ctx.Done():
 				fmt.Println("Fetcher stopping")
-				break
+				return
 			}
 		}
 	}()
@@ -48,8 +52,7 @@ func (a *fetcher) Start() error {
 func (a *fetcher) doFetch() {
 	work := common.FetchWork{}
 
-	client := resty.New()
-	_, err := client.R().
+	_, err := a.client.R().
 		SetResult(&work).
 		Get("http://" + a.configURL + "/work")
 
@@ -59,9 +62,8 @@ func (a *fetcher) doFetch() {
 	}
 
 	for _, job := range work.Jobs {
-		fmt.Printf("Fetching %s\n", job.URL)
-		// a.fetchFeed(job)
-		// TODO - interpret and push to store
+		// fmt.Printf("Fetching %s\n", job.URL)
+		a.fetchFeed(job)
 	}
 }
 
@@ -75,7 +77,31 @@ func (a *fetcher) fetchFeed(job common.FetchJob) {
 		return
 	}
 
-	fmt.Printf("Fetched %s\n", feed.Title)
+	articles := []common.StoreArticle{}
+	for _, item := range feed.Items {
+		articles = append(articles, common.StoreArticle{
+			ID:    item.GUID,
+			Title: item.Title,
+			Date:  *item.PublishedParsed,
+			Body:  item.Content,
+		})
+	}
+
+	toPush := common.InputFeed{
+		Articles: articles,
+	}
+
+	_, err = a.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(toPush).
+		Post("http://" + job.Store + "/feeds/" + job.ID)
+
+	if err != nil {
+		fmt.Printf("Error storing %s: %v\n", job.URL, err)
+		return
+	}
+
+	// TODO - ack job done
 }
 
 func (a *fetcher) Stop() {

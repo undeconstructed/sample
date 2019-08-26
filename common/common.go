@@ -1,5 +1,7 @@
 package common
 
+import "time"
+
 // Service is a simple service
 type Service interface {
 	Start() error
@@ -8,19 +10,14 @@ type Service interface {
 
 // SourceConfig to put new sources into config server.
 type SourceConfig struct {
-	URL   string `json:"url"`
-	Store string `json:"store"`
-}
-
-// SourceConfig2 is a name that needs to be refactored.
-type SourceConfig2 struct {
 	ID    string `json:"id"`
+	URL   string `json:"url"`
 	Store string `json:"store"`
 }
 
 // SourcesConfig is a list of sources
 type SourcesConfig struct {
-	Sources []SourceConfig2 `json:"sources"`
+	Sources []SourceConfig `json:"sources"`
 }
 
 // FetchJob tells a fetcher to do something.
@@ -43,9 +40,10 @@ type StoreFeed struct {
 
 // StoreArticle is an article as stored in the store.
 type StoreArticle struct {
-	ID   string `json:"id"`
-	Date string `json:"date"`
-	Body string `json:"body"`
+	ID    string    `json:"id"`
+	Title string    `json:"title"`
+	Date  time.Time `json:"date"`
+	Body  string    `json:"body"`
 }
 
 // InputFeed is for putting feed data into the store.
@@ -62,8 +60,9 @@ type OutputFeed struct {
 
 // OutputArticle is how the frontend presents articles
 type OutputArticle struct {
-	Source string `json:"source"`
-	ID     string `json:"id"`
-	Date   string `json:"date"`
-	Body   string `json:"body"`
+	Source string    `json:"source"`
+	ID     string    `json:"id"`
+	Title  string    `json:"title"`
+	Date   time.Time `json:"date"`
+	Body   string    `json:"body"`
 }

@@ -24,10 +24,12 @@ func New(port int, store string) Config {
 
 	// dummy date
 	a.sources["bbc"] = common.SourceConfig{
+		ID:    "bbc",
 		URL:   "http://feeds.bbci.co.uk/news/uk/rss.xml",
 		Store: store,
 	}
 	a.sources["itv"] = common.SourceConfig{
+		ID:    "itv",
 		URL:   "http://itv.thing",
 		Store: store,
 	}
@@ -82,11 +84,13 @@ func (a *config) Start() error {
 }
 
 func (a *config) getSources(c *gin.Context) {
-	sources := []common.SourceConfig2{}
+	sources := []common.SourceConfig{}
 
 	for i, s := range a.sources {
-		sources = append(sources, common.SourceConfig2{
+		// XXX - currently this just copies the slice for no reason
+		sources = append(sources, common.SourceConfig{
 			ID:    i,
+			URL:   s.URL,
 			Store: s.Store,
 		})
 	}

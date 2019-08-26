@@ -5,8 +5,6 @@ Thought I'd try out gin this time.
 
 Because it's microservices I've spent time on boilerplate and not really done much implementation, and so there's very little interesting Go code.
 
-It also doesn't actually do anything, since I haven't yet got to parsing the input feeds, or storing the results.
-
 I'll probably carry on a bit, since it's actually not a bad project to try out some microservice ideas on.
 
 ## sample

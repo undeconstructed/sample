@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"sort"
 
 	"github.com/gin-gonic/gin"
 
@@ -16,31 +17,7 @@ type Store interface {
 }
 
 func New(port int) Store {
-	feeds := map[string]common.StoreFeed{}
-
-	// dummy data, stored directly in its output format
-	feed1 := common.StoreFeed{
-		ID: "bbc",
-		Articles: []common.StoreArticle{
-			{
-				ID:   "1",
-				Date: "1",
-				Body: "this bbc is article 1",
-			},
-		},
-	}
-	feeds[feed1.ID] = feed1
-	feed2 := common.StoreFeed{
-		ID: "itv",
-		Articles: []common.StoreArticle{
-			{
-				ID:   "1",
-				Date: "1",
-				Body: "this is itv article 1",
-			},
-		},
-	}
-	feeds[feed2.ID] = feed2
+	feeds := map[string]*feedHolder{}
 
 	return &store{
 		port:  port,
@@ -48,12 +25,46 @@ func New(port int) Store {
 	}
 }
 
+type feedSorter []common.StoreArticle
+
+func (a feedSorter) Len() int           { return len(a) }
+func (a feedSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a feedSorter) Less(i, j int) bool { return a[i].Date.Before(a[j].Date) }
+
+type feedHolder struct {
+	id       string
+	articles map[string]common.StoreArticle
+}
+
+func newFeedHolder(id string) *feedHolder {
+	return &feedHolder{
+		id:       id,
+		articles: map[string]common.StoreArticle{},
+	}
+}
+
+func (f *feedHolder) add(in []common.StoreArticle) {
+	for _, a := range in {
+		f.articles[a.ID] = a
+	}
+}
+
+// XXX
+func (f *feedHolder) getSomeArticles() []common.StoreArticle {
+	articles := make(feedSorter, len(f.articles))
+	for _, a := range f.articles {
+		articles = append(articles, a)
+		sort.Sort(articles)
+	}
+	return articles
+}
+
 type store struct {
 	port    int
 	stopped chan bool
 	stop    context.CancelFunc
 	srv     http.Server
-	feeds   map[string]common.StoreFeed
+	feeds   map[string]*feedHolder
 }
 
 func (a *store) Start() error {
@@ -92,21 +103,45 @@ func (a *store) Start() error {
 }
 
 func (a *store) postFeed(c *gin.Context) {
+	fid := c.Param("fid")
 	in := common.InputFeed{}
 	err := c.Bind(&in)
 	if err != nil {
 		return
 	}
-	// TODO - insert any new articles into the store
+
+	// XXX nothing threadsafe
+
+	feed, exists := a.feeds[fid]
+	if !exists {
+		feed = newFeedHolder(fid)
+		a.feeds[feed.id] = feed
+	}
+
+	feed.add(in.Articles)
+
 	c.JSON(http.StatusOK, in)
 }
 
 func (a *store) getFeed(c *gin.Context) {
 	fid := c.Param("fid")
+
 	// since := c.Query("since")
 	// TODO - selective fetching
-	feed := a.feeds[fid]
-	c.JSON(http.StatusOK, feed)
+	feed, exists := a.feeds[fid]
+	if !exists {
+		c.String(http.StatusNotFound, "not found")
+		return
+	}
+
+	articles := feed.getSomeArticles()
+
+	out := common.StoreFeed{
+		ID:       feed.id,
+		Articles: articles,
+	}
+
+	c.JSON(http.StatusOK, out)
 }
 
 func (a *store) putArticle(c *gin.Context) {

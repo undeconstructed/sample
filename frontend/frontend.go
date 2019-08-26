@@ -21,14 +21,7 @@ type Frontend interface {
 
 // New makes a new Frontend
 func New(port int, configURL string) Frontend {
-	articles := []common.OutputArticle{
-		common.OutputArticle{
-			Source: "bbc",
-			ID:     "1",
-			Date:   "1",
-			Body:   "this is a dummy article",
-		},
-	}
+	articles := []common.OutputArticle{}
 
 	return &server{
 		port:      port,
@@ -107,8 +100,8 @@ func (a *server) Start() error {
 	return nil
 }
 
+// find out what sources exist
 func (a *server) updateSources() {
-	// find out what sources exist
 	sources := common.SourcesConfig{}
 
 	_, err := a.client.R().
@@ -124,13 +117,12 @@ func (a *server) updateSources() {
 	a.sources = sources
 }
 
+// get rid of old things
 func (a *server) purgeArticles(before time.Time) {
-	// get rid of old things
 }
 
+// get any new articles from the store
 func (a *server) updateFeeds(since time.Time) {
-	// get any new articles from the store
-
 	for _, s := range a.sources.Sources {
 		feed := common.StoreFeed{}
 		_, err := a.client.R().
@@ -143,8 +135,18 @@ func (a *server) updateFeeds(since time.Time) {
 			continue
 		}
 
-		// TODO - create new index
-		fmt.Printf("Updated: %v\n", feed)
+		// TODO - merge, not replace
+		newArticles := make([]common.OutputArticle, len(feed.Articles))
+		for _, a := range feed.Articles {
+			newArticles = append(newArticles, common.OutputArticle{
+				Source: feed.ID,
+				ID:     a.ID,
+				Title:  a.Title,
+				Date:   a.Date,
+				Body:   a.Body,
+			})
+		}
+		a.articles = newArticles
 	}
 }
 
