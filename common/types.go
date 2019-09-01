@@ -20,11 +20,6 @@ type SourcesConfig struct {
 	Sources []SourceConfig `json:"sources"`
 }
 
-// InputFeed is for putting feed data into the store.
-type InputFeed struct {
-	Articles []StoreArticle `json:"articles"`
-}
-
 // OutputFeed is how the frontend serves data.
 type OutputFeed struct {
 	Query    string          `json:"query"`

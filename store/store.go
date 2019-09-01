@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"sort"
 	"time"
 
@@ -16,16 +15,18 @@ import (
 
 var log = logrus.WithField("service", "store")
 
+// Store stores
 type Store interface {
 	common.Service
 }
 
-func New(port int) Store {
+// New makes
+func New(httpBind string) Store {
 	feeds := map[string]*feedHolder{}
 
 	return &store{
-		port:  port,
-		feeds: feeds,
+		httpBind: httpBind,
+		feeds:    feeds,
 	}
 }
 
@@ -74,12 +75,12 @@ func (f *feedHolder) getSomeArticles() []storeArticle {
 }
 
 type store struct {
-	port    int
+	httpBind string
+
 	stopped chan bool
 	stop    context.CancelFunc
-	srv     *grpc.Server
-	hsrv    http.Server
-	feeds   map[string]*feedHolder
+
+	feeds map[string]*feedHolder
 }
 
 func (a *store) Start() error {
@@ -89,23 +90,22 @@ func (a *store) Start() error {
 	a.stopped = make(chan bool)
 	a.stop = cancel
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
+	l, err := net.Listen("tcp", a.httpBind)
 	if err != nil {
 		return err
 	}
 
-	a.srv = grpc.NewServer()
-	common.RegisterStoreServer(a.srv, a)
+	srv := grpc.NewServer()
+	common.RegisterStoreServer(srv, a)
 
 	go func() {
-		a.srv.Serve(l)
+		srv.Serve(l)
 	}()
 
 	go func() {
 		<-ctx.Done()
 		log.Info("Stopping")
-		a.srv.GracefulStop()
-		l.Close()
+		srv.GracefulStop()
 		close(a.stopped)
 	}()
 

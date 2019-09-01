@@ -25,8 +25,9 @@ func New(configURL string) Fetcher {
 
 type fetcher struct {
 	configURL string
-	stop      context.CancelFunc
-	config    common.ConfigClient
+
+	stop   context.CancelFunc
+	config common.ConfigClient
 }
 
 func (a *fetcher) Start() error {

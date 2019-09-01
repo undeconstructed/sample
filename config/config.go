@@ -2,12 +2,12 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
@@ -15,41 +15,43 @@ import (
 
 var log = logrus.WithField("service", "config")
 
+// Config holds config
 type Config interface {
 	common.Service
 }
 
-func New(port int, store string) Config {
+// New makes
+func New(grpcBind, httpBind string, storeURL string) Config {
 	a := &config{
-		port:    port,
-		store:   store,
-		sources: map[string]common.SourceConfig{},
+		grpcBind: grpcBind,
+		httpBind: httpBind,
+		storeURL: storeURL,
+		sources:  map[string]common.SourceConfig{},
 	}
 
 	// dummy date
 	a.sources["bbc"] = common.SourceConfig{
 		ID:    "bbc",
 		URL:   "http://feeds.bbci.co.uk/news/uk/rss.xml",
-		Store: store,
+		Store: storeURL,
 	}
 	a.sources["itv"] = common.SourceConfig{
 		ID:    "itv",
 		URL:   "http://itv.thing",
-		Store: store,
+		Store: storeURL,
 	}
 
 	return a
 }
 
 type config struct {
-	port    int
+	grpcBind string
+	httpBind string
+	storeURL string
+
 	stopped chan bool
 	stop    context.CancelFunc
 
-	srv  *grpc.Server
-	hsrv http.Server
-
-	store   string
 	sources map[string]common.SourceConfig
 }
 
@@ -60,41 +62,64 @@ func (a *config) Start() error {
 	a.stopped = make(chan bool)
 	a.stop = cancel
 
+	grp, gctx := errgroup.WithContext(ctx)
+
+	rl, err := net.Listen("tcp", a.grpcBind)
+	if err != nil {
+		return err
+	}
+
+	hl, err := net.Listen("tcp", a.httpBind)
+	if err != nil {
+		return err
+	}
+
+	grp.Go(func() error {
+		return a.startGRPC(gctx, rl)
+	})
+	grp.Go(func() error {
+		return a.startHTTP(gctx, hl)
+	})
+
+	go func() {
+		<-ctx.Done()
+		log.Info("Stopping")
+		// cancel was automatically propogated into grp
+		grp.Wait()
+		close(a.stopped)
+	}()
+
+	return nil
+}
+
+func (a *config) startGRPC(ctx context.Context, l net.Listener) error {
+	srv := grpc.NewServer()
+	common.RegisterConfigServer(srv, a)
+
+	go func() {
+		<-ctx.Done()
+		srv.GracefulStop()
+	}()
+
+	return srv.Serve(l)
+}
+
+func (a *config) startHTTP(ctx context.Context, l net.Listener) error {
 	router := gin.Default()
 	router.GET("/sources", a.getSources)
 	router.PUT("/sources/:id", a.putSource)
 	router.GET("/sources/:id", a.getSource)
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
-	if err != nil {
-		return err
-	}
-
-	a.hsrv = http.Server{
+	srv := http.Server{
 		Handler: router,
 	}
 
-	a.srv = grpc.NewServer()
-	common.RegisterConfigServer(a.srv, a)
-
-	go func() {
-		a.hsrv.Serve(l)
-	}()
-
-	go func() {
-		a.srv.Serve(l)
-	}()
-
 	go func() {
 		<-ctx.Done()
-		log.Info("Stopping")
-		a.srv.GracefulStop()
-		a.hsrv.Shutdown(context.Background())
-		l.Close()
-		close(a.stopped)
+		srv.Shutdown(context.Background())
 	}()
 
-	return nil
+	return srv.Serve(l)
 }
 
 func (a *config) GetSources(context.Context, *common.Nil) (*common.ConfigSources, error) {
@@ -122,7 +147,7 @@ func (a *config) GetWork(context.Context, *common.Nil) (*common.FetchWork, error
 		jobs = append(jobs, &common.FetchJob{
 			ID:    i,
 			URL:   s.URL,
-			Store: a.store,
+			Store: a.storeURL,
 		})
 	}
 

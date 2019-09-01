@@ -21,10 +21,10 @@ type testService struct {
 func makeTestService() *testService {
 	return &testService{
 		services: []common.Service{
-			config.New(8001, "localhost:8002"),
+			config.New(":8001", ":8087", "localhost:8002"),
 			fetcher.New("localhost:8001"),
-			frontend.New(8088, "localhost:8001"),
-			store.New(8002),
+			frontend.New(":8088", "localhost:8001"),
+			store.New(":8002"),
 		},
 	}
 }
@@ -55,13 +55,13 @@ func main() {
 	case "test":
 		service = makeTestService()
 	case "config":
-		service = config.New(8081, os.Args[2])
+		service = config.New(":8081", ":8087", os.Args[2])
 	case "frontend":
-		service = frontend.New(8080, os.Args[2])
+		service = frontend.New(":8080", os.Args[2])
 	case "fetcher":
 		service = fetcher.New(os.Args[2])
 	case "store":
-		service = store.New(8082)
+		service = store.New(":8082")
 	default:
 		os.Exit(1)
 	}

@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
@@ -22,11 +21,11 @@ type Frontend interface {
 }
 
 // New makes a new Frontend
-func New(port int, configURL string) Frontend {
+func New(httpBind string, configURL string) Frontend {
 	articles := []common.OutputArticle{}
 
 	return &server{
-		port:      port,
+		httpBind:  httpBind,
 		configURL: configURL,
 		sources:   []*common.ConfigSource{},
 		articles:  articles,
@@ -34,7 +33,7 @@ func New(port int, configURL string) Frontend {
 }
 
 type server struct {
-	port       int
+	httpBind   string
 	configURL  string
 	stopped    chan bool
 	stop       context.CancelFunc
@@ -56,7 +55,7 @@ func (a *server) Start() error {
 	router.GET("/feed", a.getFeed)
 	router.GET("/items/:id", a.getItem)
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
+	l, err := net.Listen("tcp", a.httpBind)
 	if err != nil {
 		return err
 	}
