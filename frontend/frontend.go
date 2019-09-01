@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
@@ -33,11 +34,12 @@ func New(httpBind string, configURL string) Frontend {
 }
 
 type server struct {
-	httpBind   string
-	configURL  string
-	stopped    chan bool
-	stop       context.CancelFunc
-	srv        http.Server
+	httpBind  string
+	configURL string
+
+	stopped chan bool
+	stop    context.CancelFunc
+
 	sources    []*common.ConfigSource
 	lastUpdate time.Time
 	// article index (with full data)
@@ -51,53 +53,64 @@ func (a *server) Start() error {
 	a.stopped = make(chan bool)
 	a.stop = cancel
 
-	router := gin.Default()
-	router.GET("/feed", a.getFeed)
-	router.GET("/items/:id", a.getItem)
+	grp, gctx := errgroup.WithContext(ctx)
 
 	l, err := net.Listen("tcp", a.httpBind)
 	if err != nil {
 		return err
 	}
 
-	a.srv = http.Server{
-		Handler: router,
-	}
+	grp.Go(func() error {
+		return a.startHTTP(gctx, l)
+	})
+	grp.Go(func() error {
+		return a.startUpdater(gctx)
+	})
 
-	// server in new goroutine
-	go func() {
-		a.srv.Serve(l)
-	}()
-
-	// updater in new goroutine
-	go func() {
-		// could update on request instead, of course
-		for {
-			now := time.Now()
-			a.updateSources()
-			a.purgeArticles(now)
-			a.updateFeeds(a.lastUpdate)
-			a.lastUpdate = now
-			t := time.After(10 * time.Second)
-			select {
-			case <-t:
-				continue
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	// server must be stopped from another routine
 	go func() {
 		<-ctx.Done()
 		log.Info("Stopping")
-		a.srv.Shutdown(context.Background())
-		l.Close()
+		// cancel was automatically propogated into grp
+		grp.Wait()
 		close(a.stopped)
 	}()
 
 	return nil
+}
+
+func (a *server) startHTTP(ctx context.Context, l net.Listener) error {
+	router := gin.Default()
+	router.GET("/feed", a.getFeed)
+	router.GET("/items/:id", a.getItem)
+
+	srv := http.Server{
+		Handler: router,
+	}
+
+	go func() {
+		<-ctx.Done()
+		srv.Shutdown(context.Background())
+	}()
+
+	return srv.Serve(l)
+}
+
+func (a *server) startUpdater(ctx context.Context) error {
+	// could update on request instead, of course
+	for {
+		now := time.Now()
+		a.updateSources()
+		a.purgeArticles(now)
+		a.updateFeeds(a.lastUpdate)
+		a.lastUpdate = now
+		t := time.After(10 * time.Second)
+		select {
+		case <-t:
+			continue
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 // find out what sources exist

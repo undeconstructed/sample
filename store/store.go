@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
@@ -90,26 +91,38 @@ func (a *store) Start() error {
 	a.stopped = make(chan bool)
 	a.stop = cancel
 
+	grp, gctx := errgroup.WithContext(ctx)
+
 	l, err := net.Listen("tcp", a.httpBind)
 	if err != nil {
 		return err
 	}
 
-	srv := grpc.NewServer()
-	common.RegisterStoreServer(srv, a)
-
-	go func() {
-		srv.Serve(l)
-	}()
+	grp.Go(func() error {
+		return a.startGRPC(gctx, l)
+	})
 
 	go func() {
 		<-ctx.Done()
 		log.Info("Stopping")
-		srv.GracefulStop()
+		// cancel was automatically propogated into grp
+		grp.Wait()
 		close(a.stopped)
 	}()
 
 	return nil
+}
+
+func (a *store) startGRPC(ctx context.Context, l net.Listener) error {
+	srv := grpc.NewServer()
+	common.RegisterStoreServer(srv, a)
+
+	go func() {
+		<-ctx.Done()
+		srv.GracefulStop()
+	}()
+
+	return srv.Serve(l)
 }
 
 func (a *store) PostFeed(_ context.Context, req *common.StorePostFeedRequest) (*common.StorePostFeedResponse, error) {
