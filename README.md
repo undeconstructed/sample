@@ -47,7 +47,7 @@ Where `/feed` represents a single resource that generates a feed from internal r
 
 Fetches from sources - runs whenever, can fail at any time without causing problems. Could also be turned into a per-task process, although that would make it harder to remember the state as of the last-fetch of a source.
 
-Currently it asks the config server what it should fetch, then fetches, then go back to the start.
+Currently it asks the config server what it should fetch, then fetches, then goes back to the start.
 
 ## store
 

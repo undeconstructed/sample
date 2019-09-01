@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package common;
+
+service Config {
+  rpc GetSources (Nil) returns (ConfigSources) {}
+  rpc GetWork (Nil) returns (FetchWork) {}
+}
+
+message Nil {}
+
+message ConfigSources {
+  repeated ConfigSource sources = 1;
+}
+
+message ConfigSource {
+  string ID = 1;
+  string URL = 2;
+  string store = 3;
+}
+
+// FetchWork tells a fetcher all its jobs.
+message FetchWork {
+  repeated FetchJob jobs = 1;
+}
+
+// FetchJob tells a fetcher to do something.
+message FetchJob {
+  string ID = 1;
+  string URL = 2;
+  string store = 3;
+}
+
+service Store {
+  rpc PostFeed (StorePostFeedRequest) returns (StorePostFeedResponse) {}
+  rpc GetFeed (StoreGetFeedRequest) returns (StoreGetFeedResponse) {}
+}
+
+message StoreArticle {
+  string ID = 1;
+  string title = 2;
+  int64 date = 3;
+  string body = 4;
+}
+
+message StorePostFeedRequest {
+  string feedID = 1;
+  repeated StoreArticle articles = 2;
+}
+
+message StorePostFeedResponse {
+}
+
+message StoreGetFeedRequest {
+  string feedID = 1;
+}
+
+message StoreGetFeedResponse {
+  repeated StoreArticle articles = 2;
+}

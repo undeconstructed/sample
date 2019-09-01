@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	resty "github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
 )
+
+var log = logrus.WithField("service", "frontend")
 
 // Frontend is the frontend microservice
 type Frontend interface {
@@ -26,7 +28,7 @@ func New(port int, configURL string) Frontend {
 	return &server{
 		port:      port,
 		configURL: configURL,
-		sources:   common.SourcesConfig{},
+		sources:   []*common.ConfigSource{},
 		articles:  articles,
 	}
 }
@@ -37,18 +39,18 @@ type server struct {
 	stopped    chan bool
 	stop       context.CancelFunc
 	srv        http.Server
-	client     *resty.Client
-	sources    common.SourcesConfig
+	sources    []*common.ConfigSource
 	lastUpdate time.Time
 	// article index (with full data)
 	articles []common.OutputArticle
 }
 
 func (a *server) Start() error {
+	log.Info("Starting")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	a.stopped = make(chan bool)
 	a.stop = cancel
-	a.client = resty.New()
 
 	router := gin.Default()
 	router.GET("/feed", a.getFeed)
@@ -82,8 +84,7 @@ func (a *server) Start() error {
 			case <-t:
 				continue
 			case <-ctx.Done():
-				fmt.Println("Fetcher stopping")
-				break
+				return
 			}
 		}
 	}()
@@ -91,7 +92,7 @@ func (a *server) Start() error {
 	// server must be stopped from another routine
 	go func() {
 		<-ctx.Done()
-		fmt.Println("Frontend stopping")
+		log.Info("Stopping")
 		a.srv.Shutdown(context.Background())
 		l.Close()
 		close(a.stopped)
@@ -102,19 +103,22 @@ func (a *server) Start() error {
 
 // find out what sources exist
 func (a *server) updateSources() {
-	sources := common.SourcesConfig{}
-
-	_, err := a.client.R().
-		SetResult(&sources).
-		Get("http://" + a.configURL + "/sources/")
-
+	conn, err := grpc.Dial(a.configURL, grpc.WithInsecure())
 	if err != nil {
-		fmt.Printf("Error fetching sources list: %v\n", err)
+		log.WithError(err).Error("Error getting source list")
+		return
+	}
+	defer conn.Close()
+	c := common.NewConfigClient(conn)
+
+	sources, err := c.GetSources(context.Background(), &common.Nil{})
+	if err != nil {
+		log.WithError(err).Error("Error getting source list")
 		return
 	}
 
 	// atomic replace of whole list
-	a.sources = sources
+	a.sources = sources.Sources
 }
 
 // get rid of old things
@@ -123,29 +127,38 @@ func (a *server) purgeArticles(before time.Time) {
 
 // get any new articles from the store
 func (a *server) updateFeeds(since time.Time) {
-	for _, s := range a.sources.Sources {
-		feed := common.StoreFeed{}
-		_, err := a.client.R().
-			SetQueryParam("since", strconv.FormatInt(since.Unix(), 10)).
-			SetResult(&feed).
-			Get("http://" + s.Store + "/feeds/" + s.ID)
+	for _, s := range a.sources {
 
+		conn, err := grpc.Dial(s.Store, grpc.WithInsecure())
 		if err != nil {
-			fmt.Printf("Error updating feed %s: %v\n", s.ID, err)
-			continue
+			log.WithError(err).Error("Error connecting to store")
+			return
+		}
+		defer conn.Close()
+		c := common.NewStoreClient(conn)
+
+		req := &common.StoreGetFeedRequest{
+			FeedID: s.ID,
 		}
 
-		// TODO - merge, not replace
-		newArticles := make([]common.OutputArticle, len(feed.Articles))
-		for _, a := range feed.Articles {
+		res, err := c.GetFeed(context.Background(), req)
+		if err != nil {
+			log.WithError(err).Error("Error updating feed")
+			return
+		}
+
+		newArticles := make([]common.OutputArticle, 0, len(res.Articles))
+		for _, a := range res.Articles {
 			newArticles = append(newArticles, common.OutputArticle{
-				Source: feed.ID,
+				Source: s.ID,
 				ID:     a.ID,
 				Title:  a.Title,
-				Date:   a.Date,
+				Date:   time.Unix(a.Date, 0),
 				Body:   a.Body,
 			})
 		}
+
+		// TODO - merge, not replace
 		a.articles = newArticles
 	}
 }

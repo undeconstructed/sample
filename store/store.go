@@ -6,11 +6,15 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
 )
+
+var log = logrus.WithField("service", "store")
 
 type Store interface {
 	common.Service
@@ -25,7 +29,15 @@ func New(port int) Store {
 	}
 }
 
-type feedSorter []common.StoreArticle
+// storeArticle is an article as stored in the store.
+type storeArticle struct {
+	ID    string    `json:"id"`
+	Title string    `json:"title"`
+	Date  time.Time `json:"date"`
+	Body  string    `json:"body"`
+}
+
+type feedSorter []storeArticle
 
 func (a feedSorter) Len() int           { return len(a) }
 func (a feedSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
@@ -33,25 +45,27 @@ func (a feedSorter) Less(i, j int) bool { return a[i].Date.Before(a[j].Date) }
 
 type feedHolder struct {
 	id       string
-	articles map[string]common.StoreArticle
+	articles map[string]storeArticle
 }
 
 func newFeedHolder(id string) *feedHolder {
 	return &feedHolder{
 		id:       id,
-		articles: map[string]common.StoreArticle{},
+		articles: map[string]storeArticle{},
 	}
 }
 
-func (f *feedHolder) add(in []common.StoreArticle) {
-	for _, a := range in {
-		f.articles[a.ID] = a
+func (f *feedHolder) add(a storeArticle) {
+	if _, exists := f.articles[a.ID]; exists {
+		return
 	}
+	// log.WithField("article", a).Info("Storing article")
+	f.articles[a.ID] = a
 }
 
 // XXX
-func (f *feedHolder) getSomeArticles() []common.StoreArticle {
-	articles := make(feedSorter, len(f.articles))
+func (f *feedHolder) getSomeArticles() []storeArticle {
+	articles := make(feedSorter, 0, len(f.articles))
 	for _, a := range f.articles {
 		articles = append(articles, a)
 		sort.Sort(articles)
@@ -63,29 +77,25 @@ type store struct {
 	port    int
 	stopped chan bool
 	stop    context.CancelFunc
-	srv     http.Server
+	srv     *grpc.Server
+	hsrv    http.Server
 	feeds   map[string]*feedHolder
 }
 
 func (a *store) Start() error {
+	log.Info("Starting")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	a.stopped = make(chan bool)
 	a.stop = cancel
-
-	router := gin.Default()
-	router.POST("/feeds/:fid", a.postFeed)
-	router.GET("/feeds/:fid", a.getFeed)
-	router.PUT("/feeds/:fid/articles/:aid", a.putArticle)
-	router.GET("/feeds/:fid/articles/:aid", a.getArticle)
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
 		return err
 	}
 
-	a.srv = http.Server{
-		Handler: router,
-	}
+	a.srv = grpc.NewServer()
+	common.RegisterStoreServer(a.srv, a)
 
 	go func() {
 		a.srv.Serve(l)
@@ -93,8 +103,8 @@ func (a *store) Start() error {
 
 	go func() {
 		<-ctx.Done()
-		fmt.Println("Store stopping")
-		a.srv.Shutdown(context.Background())
+		log.Info("Stopping")
+		a.srv.GracefulStop()
 		l.Close()
 		close(a.stopped)
 	}()
@@ -102,15 +112,9 @@ func (a *store) Start() error {
 	return nil
 }
 
-func (a *store) postFeed(c *gin.Context) {
-	fid := c.Param("fid")
-	in := common.InputFeed{}
-	err := c.Bind(&in)
-	if err != nil {
-		return
-	}
-
+func (a *store) PostFeed(_ context.Context, req *common.StorePostFeedRequest) (*common.StorePostFeedResponse, error) {
 	// XXX nothing threadsafe
+	fid := req.FeedID
 
 	feed, exists := a.feeds[fid]
 	if !exists {
@@ -118,38 +122,47 @@ func (a *store) postFeed(c *gin.Context) {
 		a.feeds[feed.id] = feed
 	}
 
-	feed.add(in.Articles)
+	for _, a := range req.Articles {
+		feed.add(storeArticle{
+			ID:    a.ID,
+			Date:  time.Unix(a.Date, 0),
+			Title: a.Title,
+			Body:  a.Body,
+		})
+	}
 
-	c.JSON(http.StatusOK, in)
+	out := &common.StorePostFeedResponse{}
+
+	return out, nil
 }
 
-func (a *store) getFeed(c *gin.Context) {
-	fid := c.Param("fid")
+func (a *store) GetFeed(_ context.Context, req *common.StoreGetFeedRequest) (*common.StoreGetFeedResponse, error) {
+	// XXX nothing threadsafe
+	fid := req.FeedID
+	// since := ...
 
-	// since := c.Query("since")
 	// TODO - selective fetching
 	feed, exists := a.feeds[fid]
 	if !exists {
-		c.String(http.StatusNotFound, "not found")
-		return
+		return nil, fmt.Errorf("no feed: %s", fid)
 	}
 
-	articles := feed.getSomeArticles()
+	articles1 := feed.getSomeArticles()
+	articles := make([]*common.StoreArticle, 0, len(articles1))
+	for _, a := range articles1 {
+		articles = append(articles, &common.StoreArticle{
+			ID:    a.ID,
+			Date:  a.Date.Unix(),
+			Title: a.Title,
+			Body:  a.Body,
+		})
+	}
 
-	out := common.StoreFeed{
-		ID:       feed.id,
+	out := &common.StoreGetFeedResponse{
 		Articles: articles,
 	}
 
-	c.JSON(http.StatusOK, out)
-}
-
-func (a *store) putArticle(c *gin.Context) {
-	c.String(http.StatusOK, "ok")
-}
-
-func (a *store) getArticle(c *gin.Context) {
-	c.String(http.StatusOK, "ok")
+	return out, nil
 }
 
 func (a *store) Stop() {

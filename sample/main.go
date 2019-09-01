@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/undeconstructed/sample/common"
 	"github.com/undeconstructed/sample/config"
@@ -46,6 +47,7 @@ func (ts *testService) Stop() {
 
 func main() {
 	comp := os.Args[1]
+	log.Info("Starting")
 
 	var service common.Service
 
@@ -69,13 +71,12 @@ func main() {
 
 	err := service.Start()
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
+		log.WithError(err).Fatal("Error")
 	}
 
-	fmt.Println("Started")
+	log.Info("Started")
 
 	s := <-c
-	fmt.Println("Got signal:", s)
+	log.WithField("signal", s).Info("Got signal")
 	service.Stop()
 }

@@ -2,19 +2,23 @@ package fetcher
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	resty "github.com/go-resty/resty/v2"
 	"github.com/mmcdole/gofeed"
+	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
 )
 
+var log = logrus.WithField("service", "fetcher")
+
+// Fetcher fetches
 type Fetcher interface {
 	common.Service
 }
 
+// New makes a new
 func New(configURL string) Fetcher {
 	return &fetcher{configURL: configURL}
 }
@@ -22,13 +26,14 @@ func New(configURL string) Fetcher {
 type fetcher struct {
 	configURL string
 	stop      context.CancelFunc
-	client    *resty.Client
+	config    common.ConfigClient
 }
 
 func (a *fetcher) Start() error {
+	log.Info("Starting")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	a.stop = cancel
-	a.client = resty.New()
 
 	go func() {
 		for {
@@ -40,7 +45,7 @@ func (a *fetcher) Start() error {
 				// only one fetch just now
 				return
 			case <-ctx.Done():
-				fmt.Println("Fetcher stopping")
+				log.Info("Fetcher stopping")
 				return
 			}
 		}
@@ -50,55 +55,61 @@ func (a *fetcher) Start() error {
 }
 
 func (a *fetcher) doFetch() {
-	work := common.FetchWork{}
-
-	_, err := a.client.R().
-		SetResult(&work).
-		Get("http://" + a.configURL + "/work")
-
+	conn, err := grpc.Dial(a.configURL, grpc.WithInsecure())
 	if err != nil {
-		fmt.Printf("Error fetching work list: %v\n", err)
+		log.WithError(err).Error("Error connecting to config")
+		return
+	}
+	defer conn.Close()
+	c := common.NewConfigClient(conn)
+
+	work, err := c.GetWork(context.Background(), &common.Nil{})
+	if err != nil {
+		log.WithError(err).Error("Error getting work list")
 		return
 	}
 
 	for _, job := range work.Jobs {
-		// fmt.Printf("Fetching %s\n", job.URL)
 		a.fetchFeed(job)
 	}
 }
 
-func (a *fetcher) fetchFeed(job common.FetchJob) {
+func (a *fetcher) fetchFeed(job *common.FetchJob) {
 	// TODO - etag or similar
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(job.URL)
 
 	if err != nil {
-		fmt.Printf("Error fetching %s: %v\n", job.URL, err)
+		log.WithError(err).Error("Error fetching")
 		return
 	}
 
-	articles := []common.StoreArticle{}
+	articles := make([]*common.StoreArticle, 0, len(feed.Items))
 	for _, item := range feed.Items {
-		articles = append(articles, common.StoreArticle{
+		articles = append(articles, &common.StoreArticle{
 			ID:    item.GUID,
 			Title: item.Title,
-			Date:  *item.PublishedParsed,
+			Date:  item.PublishedParsed.Unix(),
 			Body:  item.Content,
 		})
 	}
 
-	toPush := common.InputFeed{
+	conn, err := grpc.Dial(job.Store, grpc.WithInsecure())
+	if err != nil {
+		log.WithError(err).Error("Error connecting to store")
+		return
+	}
+	defer conn.Close()
+	c := common.NewStoreClient(conn)
+
+	toPush := &common.StorePostFeedRequest{
+		FeedID:   job.ID,
 		Articles: articles,
 	}
 
-	_, err = a.client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(toPush).
-		Post("http://" + job.Store + "/feeds/" + job.ID)
-
+	_, err = c.PostFeed(context.Background(), toPush)
 	if err != nil {
-		fmt.Printf("Error storing %s: %v\n", job.URL, err)
-		return
+		log.WithError(err).Error("Error storing articles")
 	}
 
 	// TODO - ack job done
