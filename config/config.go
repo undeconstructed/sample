@@ -26,20 +26,20 @@ func New(grpcBind, httpBind string, storeURL string) Config {
 		grpcBind: grpcBind,
 		httpBind: httpBind,
 		storeURL: storeURL,
-		sources:  map[string]common.SourceConfig{},
+		config:  makeStore(),
 	}
 
 	// dummy date
-	a.sources["bbc"] = common.SourceConfig{
-		ID:    "bbc",
-		URL:   "http://feeds.bbci.co.uk/news/uk/rss.xml",
-		Store: storeURL,
-	}
-	a.sources["itv"] = common.SourceConfig{
-		ID:    "itv",
-		URL:   "http://itv.thing",
-		Store: storeURL,
-	}
+	// a.sources["bbc"] = common.SourceConfig{
+	// 	ID:    "bbc",
+	// 	URL:   "http://feeds.bbci.co.uk/news/uk/rss.xml",
+	// 	Store: storeURL,
+	// }
+	// a.sources["itv"] = common.SourceConfig{
+	// 	ID:    "itv",
+	// 	URL:   "http://itv.thing",
+	// 	Store: storeURL,
+	// }
 
 	return a
 }
@@ -52,7 +52,7 @@ type config struct {
 	stopped chan bool
 	stop    context.CancelFunc
 
-	sources map[string]common.SourceConfig
+	config *store
 }
 
 func (a *config) Start() error {
@@ -74,6 +74,9 @@ func (a *config) Start() error {
 		return err
 	}
 
+	grp.Go(func() error {
+		return a.startStore(gctx)
+	})
 	grp.Go(func() error {
 		return a.startGRPC(gctx, rl)
 	})
@@ -104,6 +107,10 @@ func (a *config) startGRPC(ctx context.Context, l net.Listener) error {
 	return srv.Serve(l)
 }
 
+func (a *config) startStore(ctx context.Context) error {
+	return nil
+}
+
 func (a *config) startHTTP(ctx context.Context, l net.Listener) error {
 	router := gin.Default()
 	router.GET("/sources", a.getSources)
@@ -125,13 +132,15 @@ func (a *config) startHTTP(ctx context.Context, l net.Listener) error {
 func (a *config) GetSources(context.Context, *common.Nil) (*common.ConfigSources, error) {
 	sources := make([]*common.ConfigSource, 0)
 
-	for i, s := range a.sources {
-		sources = append(sources, &common.ConfigSource{
-			ID:    i,
-			URL:   s.URL,
-			Store: s.Store,
-		})
-	}
+	a.config.read(func (cfg *cfg) {
+		for i, s := range cfg.Sources {
+			sources = append(sources, &common.ConfigSource{
+				ID:    i,
+				URL:   s.URL,
+				Store: s.Store,
+			})
+		}
+	})
 
 	out := &common.ConfigSources{
 		Sources: sources,
@@ -143,13 +152,15 @@ func (a *config) GetSources(context.Context, *common.Nil) (*common.ConfigSources
 func (a *config) GetWork(context.Context, *common.Nil) (*common.FetchWork, error) {
 	jobs := []*common.FetchJob{}
 
-	for i, s := range a.sources {
-		jobs = append(jobs, &common.FetchJob{
-			ID:    i,
-			URL:   s.URL,
-			Store: a.storeURL,
-		})
-	}
+	a.config.read(func (cfg *cfg) {
+		for i, s := range cfg.Sources {
+			jobs = append(jobs, &common.FetchJob{
+				ID:    i,
+				URL:   s.URL,
+				Store: a.storeURL,
+			})
+		}
+	})
 
 	out := &common.FetchWork{
 		Jobs: jobs,
@@ -161,14 +172,16 @@ func (a *config) GetWork(context.Context, *common.Nil) (*common.FetchWork, error
 func (a *config) getSources(c *gin.Context) {
 	sources := []common.SourceConfig{}
 
-	for i, s := range a.sources {
-		// XXX - currently this just copies the slice for no reason
-		sources = append(sources, common.SourceConfig{
-			ID:    i,
-			URL:   s.URL,
-			Store: s.Store,
-		})
-	}
+		a.config.read(func (cfg *cfg) {
+		for i, s := range cfg.Sources {
+			// XXX - currently this just copies the slice for no reason
+			sources = append(sources, common.SourceConfig{
+				ID:    i,
+				URL:   s.URL,
+				Store: s.Store,
+			})
+		}
+	})
 
 	c.JSON(http.StatusOK, common.SourcesConfig{
 		Sources: sources,
@@ -176,6 +189,23 @@ func (a *config) getSources(c *gin.Context) {
 }
 
 func (a *config) putSource(c *gin.Context) {
+	in := common.SourceConfig{}
+	sid := c.Param("id")
+	err := c.Bind(&in)
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request")
+		return
+	}
+
+	in.ID = sid
+	if in.Store == "" {
+		in.Store = a.storeURL
+	}
+
+	a.config.write(func (cfg *cfg) {
+		cfg.Sources[sid] = in
+	})
+
 	c.String(http.StatusOK, "ok")
 }
 
