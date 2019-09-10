@@ -13,12 +13,12 @@ Single binary project that can launch as any component, or all.
 
 `go install github.com/undeconstructed/sample/sample && sample test`
 
-test mode is config on 8001, store on 8002, frontend on 8088.
+test mode is config http on 8087, frontend http on 8088.
 
 ```
-curl 'localhost:8088/feed?query=asdasd'
+curl -XPUT -H"content-type: application/json" localhost:8087/sources/bbc -d '{"url":"http://feeds.bbci.co.uk/news/uk/rss.xml"}'
 
-curl -X POST -v -H 'content-type: application/json' 'localhost:8002/feeds/feed1' -d '{articles:[]}'
+curl 'localhost:8088/feed?query=asdasd'
 ```
 
 ## frontend
@@ -51,7 +51,8 @@ Currently it asks the config server what it should fetch, then fetches, then goe
 
 ## store
 
-Accepts from fetcher, serves to frontend - basically just a dumb store. Can fail for short periods, as the frontend is able to continue running without it.
+Accepts from fetcher, serves to frontend - basically just a dumb store. Can fail for short periods, as the frontend i
+* cs able to continue running without it.
 
 ```
 /feeds/id

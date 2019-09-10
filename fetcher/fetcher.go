@@ -2,7 +2,6 @@ package fetcher
 
 import (
 	"context"
-	"time"
 
 	"github.com/mmcdole/gofeed"
 	"github.com/sirupsen/logrus"
@@ -38,16 +37,11 @@ func (a *fetcher) Start() error {
 
 	go func() {
 		for {
-			a.doFetch()
-			t := time.After(10 * time.Second)
+			a.doFetch(ctx)
 			select {
-			case <-t:
-				// continue
-				// only one fetch just now
-				return
 			case <-ctx.Done():
-				log.Info("Fetcher stopping")
 				return
+			default:
 			}
 		}
 	}()
@@ -55,7 +49,7 @@ func (a *fetcher) Start() error {
 	return nil
 }
 
-func (a *fetcher) doFetch() {
+func (a *fetcher) doFetch(ctx context.Context) {
 	conn, err := grpc.Dial(a.configURL, grpc.WithInsecure())
 	if err != nil {
 		log.WithError(err).Error("Error connecting to config")
@@ -64,18 +58,19 @@ func (a *fetcher) doFetch() {
 	defer conn.Close()
 	c := common.NewConfigClient(conn)
 
-	work, err := c.GetWork(context.Background(), &common.Nil{})
+	work, err := c.GetWork(ctx, &common.Nil{})
 	if err != nil {
 		log.WithError(err).Error("Error getting work list")
 		return
 	}
 
 	for _, job := range work.Jobs {
-		a.fetchFeed(job)
+		log.WithField("job", job).Info("Fetching")
+		a.fetchFeed(ctx, job)
 	}
 }
 
-func (a *fetcher) fetchFeed(job *common.FetchJob) {
+func (a *fetcher) fetchFeed(ctx context.Context, job *common.FetchJob) {
 	// TODO - etag or similar
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(job.URL)
@@ -108,7 +103,7 @@ func (a *fetcher) fetchFeed(job *common.FetchJob) {
 		Articles: articles,
 	}
 
-	_, err = c.PostFeed(context.Background(), toPush)
+	_, err = c.PostFeed(ctx, toPush)
 	if err != nil {
 		log.WithError(err).Error("Error storing articles")
 	}
@@ -116,6 +111,7 @@ func (a *fetcher) fetchFeed(job *common.FetchJob) {
 	// TODO - ack job done
 }
 
-func (a *fetcher) Stop() {
+func (a *fetcher) Stop() error {
 	a.stop()
+	return nil
 }

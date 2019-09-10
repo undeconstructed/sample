@@ -5,7 +5,7 @@ import "time"
 // Service is a simple service
 type Service interface {
 	Start() error
-	Stop()
+	Stop() error
 }
 
 // SourceConfig to put new sources into config server.

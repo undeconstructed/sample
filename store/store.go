@@ -178,7 +178,8 @@ func (a *store) GetFeed(_ context.Context, req *common.StoreGetFeedRequest) (*co
 	return out, nil
 }
 
-func (a *store) Stop() {
+func (a *store) Stop() error {
 	a.stop()
 	<-a.stopped
+	return nil
 }

@@ -25,7 +25,7 @@ type Frontend interface {
 func New(httpBind string, configURL string) Frontend {
 	articles := []common.OutputArticle{}
 
-	return &server{
+	return &frontend{
 		httpBind:  httpBind,
 		configURL: configURL,
 		sources:   []*common.ConfigSource{},
@@ -33,7 +33,7 @@ func New(httpBind string, configURL string) Frontend {
 	}
 }
 
-type server struct {
+type frontend struct {
 	httpBind  string
 	configURL string
 
@@ -46,7 +46,7 @@ type server struct {
 	articles []common.OutputArticle
 }
 
-func (a *server) Start() error {
+func (a *frontend) Start() error {
 	log.Info("Starting")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -78,7 +78,7 @@ func (a *server) Start() error {
 	return nil
 }
 
-func (a *server) startHTTP(ctx context.Context, l net.Listener) error {
+func (a *frontend) startHTTP(ctx context.Context, l net.Listener) error {
 	router := gin.Default()
 	router.GET("/feed", a.getFeed)
 	router.GET("/items/:id", a.getItem)
@@ -95,7 +95,7 @@ func (a *server) startHTTP(ctx context.Context, l net.Listener) error {
 	return srv.Serve(l)
 }
 
-func (a *server) startUpdater(ctx context.Context) error {
+func (a *frontend) startUpdater(ctx context.Context) error {
 	// could update on request instead, of course
 	for {
 		now := time.Now()
@@ -114,7 +114,7 @@ func (a *server) startUpdater(ctx context.Context) error {
 }
 
 // find out what sources exist
-func (a *server) updateSources() {
+func (a *frontend) updateSources() {
 	conn, err := grpc.Dial(a.configURL, grpc.WithInsecure())
 	if err != nil {
 		log.WithError(err).Error("Error getting source list")
@@ -134,11 +134,11 @@ func (a *server) updateSources() {
 }
 
 // get rid of old things
-func (a *server) purgeArticles(before time.Time) {
+func (a *frontend) purgeArticles(before time.Time) {
 }
 
 // get any new articles from the store
-func (a *server) updateFeeds(since time.Time) {
+func (a *frontend) updateFeeds(since time.Time) {
 	for _, s := range a.sources {
 
 		conn, err := grpc.Dial(s.Store, grpc.WithInsecure())
@@ -175,7 +175,7 @@ func (a *server) updateFeeds(since time.Time) {
 	}
 }
 
-func (a *server) getFeed(c *gin.Context) {
+func (a *frontend) getFeed(c *gin.Context) {
 	query := c.Query("query")
 	from := c.Query("from")
 
@@ -189,13 +189,14 @@ func (a *server) getFeed(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
-func (a *server) getItem(c *gin.Context) {
+func (a *frontend) getItem(c *gin.Context) {
 	id := c.Param("id")
 	message := "item " + id
 	c.String(http.StatusOK, message)
 }
 
-func (a *server) Stop() {
+func (a *frontend) Stop() error {
 	a.stop()
 	<-a.stopped
+	return nil
 }

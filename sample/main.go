@@ -3,8 +3,10 @@ package main
 import (
 	"os"
 	"os/signal"
+	"time"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/undeconstructed/sample/common"
 	"github.com/undeconstructed/sample/config"
@@ -30,19 +32,19 @@ func makeTestService() *testService {
 }
 
 func (ts *testService) Start() error {
+	var grp errgroup.Group
 	for _, service := range ts.services {
-		err := service.Start()
-		if err != nil {
-			return err
-		}
+		grp.Go(service.Start)
 	}
-	return nil
+	return grp.Wait()
 }
 
-func (ts *testService) Stop() {
+func (ts *testService) Stop() error {
+	var grp errgroup.Group
 	for _, service := range ts.services {
-		service.Stop()
+		grp.Go(service.Stop)
 	}
+	return grp.Wait()
 }
 
 func main() {
@@ -78,5 +80,8 @@ func main() {
 
 	s := <-c
 	log.WithField("signal", s).Info("Got signal")
-	service.Stop()
+	t := time.After(5 * time.Second)
+	go service.Stop()
+	<-t
+	os.Exit(0)
 }
