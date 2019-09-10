@@ -43,6 +43,11 @@ func (s *store) start(ctx context.Context) error {
 		cfg0 = cfg{
 			Sources: map[string]common.SourceConfig{},
 		}
+
+		bytes, err = writeConfigFile(s.path, cfg0)
+		if err != nil {
+			return err
+		}
 	}
 
 	s.bytes = bytes
@@ -54,6 +59,9 @@ func (s *store) start(ctx context.Context) error {
 			select {
 			case c := <-s.chCh:
 				err := s.write(c.changes)
+				if err != nil {
+					log.WithError(err).Error("Error writing config")
+				}
 				c.resCh <- err
 			case <-ctx.Done():
 				return
