@@ -27,13 +27,13 @@ type store struct {
 	bytes []byte
 }
 
-func makeStore(path string, storeURL string) *store {
+func makeStore(path string, storeURL string) (*store, error) {
 	return &store{
 		path:     path,
 		storeURL: storeURL,
 		onCh:     make(chan *cfg),
 		chCh:     make(chan cchange),
-	}
+	}, nil
 }
 
 func (s *store) start(ctx context.Context) error {

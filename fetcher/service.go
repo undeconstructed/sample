@@ -12,7 +12,7 @@ import (
 
 var log = logrus.WithField("service", "fetcher")
 
-// New makes a new
+// New makes a new fetcher
 func New(configURL string) common.Service {
 	return &service{configURL: configURL}
 }

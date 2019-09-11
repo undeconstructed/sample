@@ -11,7 +11,7 @@ import (
 
 var log = logrus.WithField("service", "frontend")
 
-// New makes a new Frontend
+// New makes a new frontend
 func New(httpBind string, configURL string) common.Service {
 	articles := &someArticlesX{}
 

@@ -31,6 +31,13 @@ func makeHSrv(bind string) (*hsrv, error) {
 func (s *hsrv) start(ctx context.Context, store *store) error {
 	s.store = store
 
+	select {
+	case c := <-s.cfgCh:
+		s.cfg = c
+	case <-ctx.Done():
+		return nil
+	}
+
 	router := gin.Default()
 	router.GET("/sources", s.getSources)
 	router.PUT("/sources/:id", s.putSource)

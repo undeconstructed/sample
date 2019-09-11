@@ -11,7 +11,7 @@ import (
 
 var log = logrus.WithField("service", "store")
 
-// New makes
+// New makes a bew store
 func New(grpcBind string) common.Service {
 	feeds := someFeeds{}
 

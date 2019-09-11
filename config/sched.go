@@ -16,29 +16,31 @@ type schedEntry struct {
 	time   int64
 }
 
+type schedTable map[string]*schedEntry
+
 type sched struct {
 	reqCh chan schedReq
 	cfgCh chan *cfg
 
-	table map[string]*schedEntry
+	table schedTable
 }
 
-func makeSched() *sched {
-	reqCh := make(chan schedReq, 10)
+func makeSched() (*sched, error) {
+	reqCh := make(chan schedReq)
 	cfgCh := make(chan *cfg)
 
 	return &sched{
 		reqCh: reqCh,
 		cfgCh: cfgCh,
-		table: map[string]*schedEntry{},
-	}
+		table: schedTable{},
+	}, nil
 }
 
 func (s *sched) start(ctx context.Context) error {
 	for {
 		now := time.Now().Unix()
 		cutoff := now - 60
-		toDo := s.findNext(cutoff)
+		toDo := findNext(s.table, cutoff)
 
 		if toDo == nil {
 			t := time.After(60 * time.Second)
@@ -46,7 +48,7 @@ func (s *sched) start(ctx context.Context) error {
 			case <-t:
 				continue
 			case c := <-s.cfgCh:
-				s.updateSources(c.Sources)
+				s.table = updateTable(s.table, c.Sources)
 			case <-ctx.Done():
 				return ctx.Err()
 			}
@@ -64,7 +66,7 @@ func (s *sched) start(ctx context.Context) error {
 					},
 				}
 			case c := <-s.cfgCh:
-				s.updateSources(c.Sources)
+				s.table = updateTable(s.table, c.Sources)
 			case <-ctx.Done():
 				return ctx.Err()
 			}
@@ -72,31 +74,31 @@ func (s *sched) start(ctx context.Context) error {
 	}
 }
 
-func (s *sched) updateSources(sources map[string]common.SourceConfig) {
-	table := map[string]*schedEntry{}
-	for _, source := range sources {
-		old, exists := s.table[source.ID]
-		if !exists {
-			table[source.ID] = &schedEntry{source: source}
-		} else {
-			// TODO - changed entry
-			table[source.ID] = old
-		}
-	}
-	s.table = table
+func (s *sched) getWork() common.FetchWork {
+	resCh := make(chan common.FetchWork)
+	s.reqCh <- schedReq{resCh}
+	return <-resCh
 }
 
-func (s *sched) findNext(cutoff int64) *schedEntry {
-	for _, e := range s.table {
+func updateTable(table schedTable, sources map[string]common.SourceConfig) schedTable {
+	ntable := schedTable{}
+	for _, source := range sources {
+		old, exists := table[source.ID]
+		if !exists {
+			ntable[source.ID] = &schedEntry{source: source}
+		} else {
+			// TODO - changed entry
+			ntable[source.ID] = old
+		}
+	}
+	return ntable
+}
+
+func findNext(table schedTable, cutoff int64) *schedEntry {
+	for _, e := range table {
 		if e.time < cutoff {
 			return e
 		}
 	}
 	return nil
-}
-
-func (s *sched) getWork() common.FetchWork {
-	resCh := make(chan common.FetchWork)
-	s.reqCh <- schedReq{resCh}
-	return <-resCh
 }

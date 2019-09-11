@@ -30,6 +30,13 @@ func makeGSrv(bind string) (*gsrv, error) {
 func (s *gsrv) start(ctx context.Context, sched *sched) error {
 	s.sched = sched
 
+	select {
+	case c := <-s.cfgCh:
+		s.cfg = c
+	case <-ctx.Done():
+		return nil
+	}
+
 	srv := grpc.NewServer()
 	common.RegisterConfigServer(srv, s)
 

@@ -11,7 +11,7 @@ import (
 
 var log = logrus.WithField("service", "config")
 
-// New makes
+// New makes a config service
 func New(grpcBind, httpBind string, storeURL string) common.Service {
 	s := &service{
 		grpcBind: grpcBind,
@@ -38,8 +38,14 @@ func (s *service) Start() error {
 	s.stopped = make(chan bool)
 	s.stop = cancel
 
-	store := makeStore("config.json", s.storeURL)
-	sched := makeSched()
+	store, err := makeStore("config.json", s.storeURL)
+	if err != nil {
+		return err
+	}
+	sched, err := makeSched()
+	if err != nil {
+		return err
+	}
 	hsrvr, err := makeHSrv(s.httpBind)
 	if err != nil {
 		return err
