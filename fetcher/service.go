@@ -12,32 +12,27 @@ import (
 
 var log = logrus.WithField("service", "fetcher")
 
-// Fetcher fetches
-type Fetcher interface {
-	common.Service
-}
-
 // New makes a new
-func New(configURL string) Fetcher {
-	return &fetcher{configURL: configURL}
+func New(configURL string) common.Service {
+	return &service{configURL: configURL}
 }
 
-type fetcher struct {
+type service struct {
 	configURL string
 
 	stop   context.CancelFunc
 	config common.ConfigClient
 }
 
-func (a *fetcher) Start() error {
+func (s *service) Start() error {
 	log.Info("Starting")
 
 	ctx, cancel := context.WithCancel(context.Background())
-	a.stop = cancel
+	s.stop = cancel
 
 	go func() {
 		for {
-			a.doFetch(ctx)
+			s.doFetch(ctx)
 			select {
 			case <-ctx.Done():
 				return
@@ -49,8 +44,8 @@ func (a *fetcher) Start() error {
 	return nil
 }
 
-func (a *fetcher) doFetch(ctx context.Context) {
-	conn, err := grpc.Dial(a.configURL, grpc.WithInsecure())
+func (s *service) doFetch(ctx context.Context) {
+	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
 	if err != nil {
 		log.WithError(err).Error("Error connecting to config")
 		return
@@ -66,11 +61,11 @@ func (a *fetcher) doFetch(ctx context.Context) {
 
 	for _, job := range work.Jobs {
 		log.WithField("job", job).Info("Fetching")
-		a.fetchFeed(ctx, job)
+		s.fetchFeed(ctx, job)
 	}
 }
 
-func (a *fetcher) fetchFeed(ctx context.Context, job *common.FetchJob) {
+func (s *service) fetchFeed(ctx context.Context, job *common.FetchJob) {
 	// TODO - etag or similar
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(job.URL)
@@ -111,7 +106,7 @@ func (a *fetcher) fetchFeed(ctx context.Context, job *common.FetchJob) {
 	// TODO - ack job done
 }
 
-func (a *fetcher) Stop() error {
-	a.stop()
+func (s *service) Stop() error {
+	s.stop()
 	return nil
 }

@@ -11,23 +11,18 @@ import (
 
 var log = logrus.WithField("service", "config")
 
-// Config holds config
-type Config interface {
-	common.Service
-}
-
 // New makes
-func New(grpcBind, httpBind string, storeURL string) Config {
-	a := &config{
+func New(grpcBind, httpBind string, storeURL string) common.Service {
+	s := &service{
 		grpcBind: grpcBind,
 		httpBind: httpBind,
 		storeURL: storeURL,
 	}
 
-	return a
+	return s
 }
 
-type config struct {
+type service struct {
 	grpcBind string
 	httpBind string
 	storeURL string
@@ -36,7 +31,7 @@ type config struct {
 	stop    context.CancelFunc
 }
 
-func (s *config) Start() error {
+func (s *service) Start() error {
 	log.Info("Starting")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -92,7 +87,7 @@ func (s *config) Start() error {
 	return nil
 }
 
-func (s *config) Stop() error {
+func (s *service) Stop() error {
 	s.stop()
 	<-s.stopped
 	return nil
