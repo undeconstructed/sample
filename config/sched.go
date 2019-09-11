@@ -36,7 +36,12 @@ func makeSched() (*sched, error) {
 	}, nil
 }
 
-func (s *sched) start(ctx context.Context) error {
+func (s *sched) Start(ctx context.Context) error {
+	err := s.loop(ctx)
+	return err
+}
+
+func (s *sched) loop(ctx context.Context) error {
 	for {
 		now := time.Now().Unix()
 		cutoff := now - 60
@@ -74,10 +79,20 @@ func (s *sched) start(ctx context.Context) error {
 	}
 }
 
-func (s *sched) getWork() common.FetchWork {
+func (s *sched) getWork(ctx context.Context) (common.FetchWork, error) {
 	resCh := make(chan common.FetchWork)
-	s.reqCh <- schedReq{resCh}
-	return <-resCh
+	// well, this is horrible now
+	select {
+	case s.reqCh <- schedReq{resCh}:
+	case <-ctx.Done():
+		return common.FetchWork{}, ctx.Err()
+	}
+	select {
+	case r := <-resCh:
+		return r, nil
+	case <-ctx.Done():
+		return common.FetchWork{}, ctx.Err()
+	}
 }
 
 func updateTable(table schedTable, sources map[string]common.SourceConfig) schedTable {

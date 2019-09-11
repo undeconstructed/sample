@@ -2,9 +2,11 @@ package fetcher
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mmcdole/gofeed"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
@@ -19,29 +21,25 @@ func New(configURL string) common.Service {
 
 type service struct {
 	configURL string
-
-	stop   context.CancelFunc
-	config common.ConfigClient
 }
 
-func (s *service) Start() error {
+func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
-	ctx, cancel := context.WithCancel(context.Background())
-	s.stop = cancel
+	grp, gctx := errgroup.WithContext(ctx)
 
-	go func() {
+	grp.Go(func() error {
 		for {
-			s.doFetch(ctx)
+			s.doFetch(gctx)
 			select {
-			case <-ctx.Done():
-				return
+			case <-gctx.Done():
+				return gctx.Err()
 			default:
 			}
 		}
-	}()
+	})
 
-	return nil
+	return grp.Wait()
 }
 
 func (s *service) doFetch(ctx context.Context) {
@@ -61,18 +59,27 @@ func (s *service) doFetch(ctx context.Context) {
 
 	for _, job := range work.Jobs {
 		log.WithField("job", job).Info("Fetching")
-		s.fetchFeed(ctx, job)
+		feed, err := fetchFeed(ctx, job)
+		if err != nil {
+			log.WithError(err).Error("Error fetching")
+			continue
+		}
+		err = storeFeed(ctx, job, feed)
+		if err != nil {
+			log.WithError(err).Error("Error storing")
+			continue
+		}
+		// TODO - ack job done
 	}
 }
 
-func (s *service) fetchFeed(ctx context.Context, job *common.FetchJob) {
+func fetchFeed(ctx context.Context, job *common.FetchJob) ([]*common.StoreArticle, error) {
 	// TODO - etag or similar
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURL(job.URL)
 
 	if err != nil {
-		log.WithError(err).Error("Error fetching")
-		return
+		return nil, fmt.Errorf("Fetching %w", err)
 	}
 
 	articles := make([]*common.StoreArticle, 0, len(feed.Items))
@@ -85,28 +92,26 @@ func (s *service) fetchFeed(ctx context.Context, job *common.FetchJob) {
 		})
 	}
 
+	return articles, nil
+}
+
+func storeFeed(ctx context.Context, job *common.FetchJob, feed []*common.StoreArticle) error {
 	conn, err := grpc.Dial(job.Store, grpc.WithInsecure())
 	if err != nil {
-		log.WithError(err).Error("Error connecting to store")
-		return
+		return fmt.Errorf("Dialing %w", err)
 	}
 	defer conn.Close()
 	c := common.NewStoreClient(conn)
 
 	toPush := &common.StorePostFeedRequest{
 		FeedID:   job.ID,
-		Articles: articles,
+		Articles: feed,
 	}
 
 	_, err = c.PostFeed(ctx, toPush)
 	if err != nil {
-		log.WithError(err).Error("Error storing articles")
+		return fmt.Errorf("Storing %w", err)
 	}
 
-	// TODO - ack job done
-}
-
-func (s *service) Stop() error {
-	s.stop()
 	return nil
 }

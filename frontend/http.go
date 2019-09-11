@@ -27,7 +27,7 @@ func makeHSrv(bind string, articles someArticles) (*hsrv, error) {
 	}, nil
 }
 
-func (s *hsrv) start(ctx context.Context) error {
+func (s *hsrv) Start(ctx context.Context) error {
 	router := gin.Default()
 	router.GET("/feed", s.getFeed)
 	router.GET("/items/:id", s.getItem)

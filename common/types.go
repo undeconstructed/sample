@@ -1,11 +1,13 @@
 package common
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // Service is a simple service
 type Service interface {
-	Start() error
-	Stop() error
+	Start(context.Context) error
 }
 
 // SourceConfig to put new sources into config server.

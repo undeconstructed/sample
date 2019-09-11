@@ -28,7 +28,7 @@ func makeGSrv(bind string, feeds someFeeds) (*gsrv, error) {
 	}, nil
 }
 
-func (s *gsrv) start(ctx context.Context) error {
+func (s *gsrv) Start(ctx context.Context) error {
 	srv := grpc.NewServer()
 	common.RegisterStoreServer(srv, s)
 

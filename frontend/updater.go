@@ -24,7 +24,7 @@ func makeUpdater(configURL string, articles someArticles) (*updater, error) {
 	}, nil
 }
 
-func (s *updater) start(ctx context.Context) error {
+func (s *updater) Start(ctx context.Context) error {
 	// could update on request instead, of course
 	for {
 		now := time.Now()

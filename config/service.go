@@ -13,30 +13,21 @@ var log = logrus.WithField("service", "config")
 
 // New makes a config service
 func New(grpcBind, httpBind string, storeURL string) common.Service {
-	s := &service{
+	return &service{
 		grpcBind: grpcBind,
 		httpBind: httpBind,
 		storeURL: storeURL,
 	}
-
-	return s
 }
 
 type service struct {
 	grpcBind string
 	httpBind string
 	storeURL string
-
-	stopped chan bool
-	stop    context.CancelFunc
 }
 
-func (s *service) Start() error {
+func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	s.stopped = make(chan bool)
-	s.stop = cancel
 
 	store, err := makeStore("config.json", s.storeURL)
 	if err != nil {
@@ -65,36 +56,22 @@ func (s *service) Start() error {
 				hsrvr.cfgCh <- c
 				gsrvr.cfgCh <- c
 			case <-gctx.Done():
-				return nil
+				return gctx.Err()
 			}
 		}
 	})
 	grp.Go(func() error {
-		return store.start(gctx)
+		return store.Start(gctx)
 	})
 	grp.Go(func() error {
-		return sched.start(gctx)
+		return sched.Start(gctx)
 	})
 	grp.Go(func() error {
-		return gsrvr.start(gctx, sched)
+		return gsrvr.Start(gctx, sched)
 	})
 	grp.Go(func() error {
-		return hsrvr.start(gctx, store)
+		return hsrvr.Start(gctx, store)
 	})
 
-	go func() {
-		<-ctx.Done()
-		log.Info("Stopping")
-		// cancel was automatically propogated into grp
-		grp.Wait()
-		close(s.stopped)
-	}()
-
-	return nil
-}
-
-func (s *service) Stop() error {
-	s.stop()
-	<-s.stopped
-	return nil
+	return grp.Wait()
 }

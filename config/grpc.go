@@ -27,14 +27,14 @@ func makeGSrv(bind string) (*gsrv, error) {
 	}, nil
 }
 
-func (s *gsrv) start(ctx context.Context, sched *sched) error {
+func (s *gsrv) Start(ctx context.Context, sched *sched) error {
 	s.sched = sched
 
 	select {
 	case c := <-s.cfgCh:
 		s.cfg = c
 	case <-ctx.Done():
-		return nil
+		return ctx.Err()
 	}
 
 	srv := grpc.NewServer()
@@ -73,7 +73,10 @@ func (s *gsrv) GetSources(context.Context, *common.Nil) (*common.ConfigSources, 
 	return out, nil
 }
 
-func (s *gsrv) GetWork(context.Context, *common.Nil) (*common.FetchWork, error) {
-	out := s.sched.getWork()
+func (s *gsrv) GetWork(ctx context.Context, _ *common.Nil) (*common.FetchWork, error) {
+	out, err := s.sched.getWork(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &out, nil
 }

@@ -28,14 +28,14 @@ func makeHSrv(bind string) (*hsrv, error) {
 	}, nil
 }
 
-func (s *hsrv) start(ctx context.Context, store *store) error {
+func (s *hsrv) Start(ctx context.Context, store *store) error {
 	s.store = store
 
 	select {
 	case c := <-s.cfgCh:
 		s.cfg = c
 	case <-ctx.Done():
-		return nil
+		return ctx.Err()
 	}
 
 	router := gin.Default()

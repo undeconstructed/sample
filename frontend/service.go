@@ -33,12 +33,8 @@ type service struct {
 	articles someArticles
 }
 
-func (s *service) Start() error {
+func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	s.stopped = make(chan bool)
-	s.stop = cancel
 
 	updater, err := makeUpdater(s.configURL, s.articles)
 	if err != nil {
@@ -52,25 +48,12 @@ func (s *service) Start() error {
 	grp, gctx := errgroup.WithContext(ctx)
 
 	grp.Go(func() error {
-		return updater.start(gctx)
+		return updater.Start(gctx)
 	})
 	grp.Go(func() error {
-		return hsrvr.start(gctx)
+		return hsrvr.Start(gctx)
 	})
 
-	go func() {
-		<-ctx.Done()
-		log.Info("Stopping")
-		// cancel was automatically propogated into grp
-		grp.Wait()
-		close(s.stopped)
-	}()
-
-	return nil
-}
-
-func (s *service) Stop() error {
-	s.stop()
-	<-s.stopped
-	return nil
+	// TODO - this doesn't wait for HTTP to cleanly end
+	return grp.Wait()
 }

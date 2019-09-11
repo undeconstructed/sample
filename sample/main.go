@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"time"
@@ -31,18 +32,13 @@ func makeTestService() *testService {
 	}
 }
 
-func (ts *testService) Start() error {
-	var grp errgroup.Group
+func (ts *testService) Start(ctx context.Context) error {
+	grp, gctx := errgroup.WithContext(ctx)
 	for _, service := range ts.services {
-		grp.Go(service.Start)
-	}
-	return grp.Wait()
-}
-
-func (ts *testService) Stop() error {
-	var grp errgroup.Group
-	for _, service := range ts.services {
-		grp.Go(service.Stop)
+		service := service
+		grp.Go(func() error {
+			return service.Start(gctx)
+		})
 	}
 	return grp.Wait()
 }
@@ -71,17 +67,30 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	err := service.Start()
-	if err != nil {
-		log.WithError(err).Fatal("Error")
+	ctx, stop := context.WithCancel(context.Background())
+	errCh := make(chan error)
+
+	go func() {
+		err := service.Start(ctx)
+		if err != nil {
+			errCh <- err
+		}
+		close(errCh)
+	}()
+
+	select {
+	case e := <-errCh:
+		log.WithError(e).Info("Result")
+		return
+	case s := <-c:
+		log.WithField("signal", s).Info("Got signal")
+		stop()
 	}
 
-	log.Info("Started")
-
-	s := <-c
-	log.WithField("signal", s).Info("Got signal")
-	t := time.After(5 * time.Second)
-	go service.Stop()
-	<-t
-	os.Exit(0)
+	select {
+	case e := <-errCh:
+		log.WithError(e).Info("Result")
+	case <-time.After(10 * time.Second):
+		os.Exit(1)
+	}
 }

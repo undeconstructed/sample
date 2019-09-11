@@ -36,7 +36,7 @@ func makeStore(path string, storeURL string) (*store, error) {
 	}, nil
 }
 
-func (s *store) start(ctx context.Context) error {
+func (s *store) Start(ctx context.Context) error {
 	bytes, cfg0, err := readConfigFile(s.path)
 	if err != nil {
 		log.WithError(err).Info("Using blank new config")
@@ -51,25 +51,20 @@ func (s *store) start(ctx context.Context) error {
 	}
 
 	s.bytes = bytes
-
 	s.onCh <- &cfg0
 
-	go func() {
-		for {
-			select {
-			case c := <-s.chCh:
-				err := s.write(c.changes)
-				if err != nil {
-					log.WithError(err).Error("Error writing config")
-				}
-				c.resCh <- err
-			case <-ctx.Done():
-				return
+	for {
+		select {
+		case c := <-s.chCh:
+			err := s.write(c.changes)
+			if err != nil {
+				log.WithError(err).Error("Error writing config")
 			}
+			c.resCh <- err
+		case <-ctx.Done():
+			return ctx.Err()
 		}
-	}()
-
-	return nil
+	}
 }
 
 func readConfigFile(path string) (bytes []byte, cfg cfg, err error) {

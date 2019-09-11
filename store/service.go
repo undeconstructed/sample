@@ -11,7 +11,7 @@ import (
 
 var log = logrus.WithField("service", "store")
 
-// New makes a bew store
+// New makes a new store
 func New(grpcBind string) common.Service {
 	feeds := someFeeds{}
 
@@ -24,18 +24,11 @@ func New(grpcBind string) common.Service {
 type service struct {
 	grpcBind string
 
-	stopped chan bool
-	stop    context.CancelFunc
-
 	feeds someFeeds
 }
 
-func (s *service) Start() error {
+func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	s.stopped = make(chan bool)
-	s.stop = cancel
 
 	gsrvr, err := makeGSrv(s.grpcBind, s.feeds)
 	if err != nil {
@@ -45,22 +38,8 @@ func (s *service) Start() error {
 	grp, gctx := errgroup.WithContext(ctx)
 
 	grp.Go(func() error {
-		return gsrvr.start(gctx)
+		return gsrvr.Start(gctx)
 	})
 
-	go func() {
-		<-ctx.Done()
-		log.Info("Stopping")
-		// cancel was automatically propogated into grp
-		grp.Wait()
-		close(s.stopped)
-	}()
-
-	return nil
-}
-
-func (s *service) Stop() error {
-	s.stop()
-	<-s.stopped
-	return nil
+	return grp.Wait()
 }
