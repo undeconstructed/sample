@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
@@ -40,19 +41,24 @@ func (s *gsrv) Start(ctx context.Context, sched *sched) error {
 	srv := grpc.NewServer()
 	common.RegisterConfigServer(srv, s)
 
-	go func() {
+	grp, gctx := errgroup.WithContext(ctx)
+
+	grp.Go(func() error {
 		for {
 			select {
 			case c := <-s.cfgCh:
 				s.cfg = c
-			case <-ctx.Done():
+			case <-gctx.Done():
 				srv.GracefulStop()
-				return
+				return nil
 			}
 		}
-	}()
+	})
+	grp.Go(func() error {
+		return srv.Serve(s.listener)
+	})
 
-	return srv.Serve(s.listener)
+	return grp.Wait()
 }
 
 func (s *gsrv) GetSources(context.Context, *common.Nil) (*common.ConfigSources, error) {

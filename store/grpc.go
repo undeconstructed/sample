@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
 	"github.com/undeconstructed/sample/common"
@@ -32,17 +33,22 @@ func (s *gsrv) Start(ctx context.Context) error {
 	srv := grpc.NewServer()
 	common.RegisterStoreServer(srv, s)
 
-	go func() {
+	grp, gctx := errgroup.WithContext(ctx)
+
+	grp.Go(func() error {
 		for {
 			select {
-			case <-ctx.Done():
+			case <-gctx.Done():
 				srv.GracefulStop()
-				return
+				return nil
 			}
 		}
-	}()
+	})
+	grp.Go(func() error {
+		return srv.Serve(s.listener)
+	})
 
-	return srv.Serve(s.listener)
+	return grp.Wait()
 }
 
 func (s *gsrv) GetFeed(_ context.Context, req *common.StoreGetFeedRequest) (*common.StoreGetFeedResponse, error) {

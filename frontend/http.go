@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/undeconstructed/sample/common"
 )
@@ -36,17 +37,21 @@ func (s *hsrv) Start(ctx context.Context) error {
 		Handler: router,
 	}
 
-	go func() {
+	grp, gctx := errgroup.WithContext(ctx)
+
+	grp.Go(func() error {
 		for {
 			select {
-			case <-ctx.Done():
-				srv.Shutdown(context.Background())
-				return
+			case <-gctx.Done():
+				return srv.Shutdown(context.Background())
 			}
 		}
-	}()
+	})
+	grp.Go(func() error {
+		return srv.Serve(s.listener)
+	})
 
-	return srv.Serve(s.listener)
+	return grp.Wait()
 }
 
 func (s *hsrv) getFeed(c *gin.Context) {
