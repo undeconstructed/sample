@@ -25,7 +25,7 @@ type service struct {
 func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
-	bend, err := makeBackend()
+	bend, err := makeBackend("store.db")
 	if err != nil {
 		return err
 	}

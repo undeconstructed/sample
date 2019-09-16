@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"net"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -63,7 +62,7 @@ func (s *gsrv) GetFeed(ctx context.Context, req *common.StoreGetFeedRequest) (*c
 	for _, a := range articles1 {
 		articles = append(articles, &common.StoreArticle{
 			ID:    a.ID,
-			Date:  a.Date.Unix(),
+			Date:  a.Date,
 			Title: a.Title,
 			Body:  a.Body,
 		})
@@ -77,17 +76,19 @@ func (s *gsrv) GetFeed(ctx context.Context, req *common.StoreGetFeedRequest) (*c
 }
 
 func (s *gsrv) PostFeed(ctx context.Context, req *common.StorePostFeedRequest) (*common.StorePostFeedResponse, error) {
-	// XXX nothing threadsafe
 	fid := req.FeedID
 
+	articles := make([]storeArticle, 0, len(req.Articles))
 	for _, a := range req.Articles {
-		s.bend.Put(ctx, fid, storeArticle{
+		articles = append(articles, storeArticle{
 			ID:    a.ID,
-			Date:  time.Unix(a.Date, 0),
+			Date:  a.Date,
 			Title: a.Title,
 			Body:  a.Body,
 		})
 	}
+
+	s.bend.Put(ctx, fid, articles)
 
 	out := &common.StorePostFeedResponse{}
 
