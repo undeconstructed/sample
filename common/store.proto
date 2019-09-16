@@ -2,17 +2,21 @@ syntax = "proto3";
 
 package common;
 
+// Config service
 service Config {
   rpc GetSources (Nil) returns (ConfigSources) {}
   rpc GetWork (Nil) returns (FetchWork) {}
 }
 
+// Nil is nil
 message Nil {}
 
+// ConfigSources is a collection of data sources
 message ConfigSources {
   repeated ConfigSource sources = 1;
 }
 
+// ConfigSource defines a remote data source
 message ConfigSource {
   string ID = 1;
   string URL = 2;
@@ -31,11 +35,13 @@ message FetchJob {
   string store = 3;
 }
 
+// Store service
 service Store {
   rpc PostFeed (StorePostFeedRequest) returns (StorePostFeedResponse) {}
   rpc GetFeed (StoreGetFeedRequest) returns (StoreGetFeedResponse) {}
 }
 
+// StoreArticle is an article in the store
 message StoreArticle {
   string ID = 1;
   string title = 2;
@@ -43,18 +49,23 @@ message StoreArticle {
   string body = 4;
 }
 
+// StorePostFeedRequest is how to put articles into the store
 message StorePostFeedRequest {
   string feedID = 1;
   repeated StoreArticle articles = 2;
 }
 
+// StorePostFeedResponse is nothing
 message StorePostFeedResponse {
 }
 
+// StoreGetFeedRequest is how to request articles from the store
 message StoreGetFeedRequest {
   string feedID = 1;
+  int64 since = 2;
 }
 
+// StoreGetFeedResponse is some articles from the store
 message StoreGetFeedResponse {
   repeated StoreArticle articles = 2;
 }

@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"time"
 
@@ -15,21 +14,22 @@ import (
 type gsrv struct {
 	listener net.Listener
 
-	feeds someFeeds
+	bend *backend
 }
 
-func makeGSrv(bind string, feeds someFeeds) (*gsrv, error) {
+func makeGSrv(bind string) (*gsrv, error) {
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
 		return nil, err
 	}
 	return &gsrv{
 		listener: l,
-		feeds:    feeds,
 	}, nil
 }
 
-func (s *gsrv) Start(ctx context.Context) error {
+func (s *gsrv) Start(ctx context.Context, bend *backend) error {
+	s.bend = bend
+
 	srv := grpc.NewServer()
 	common.RegisterStoreServer(srv, s)
 
@@ -51,18 +51,14 @@ func (s *gsrv) Start(ctx context.Context) error {
 	return grp.Wait()
 }
 
-func (s *gsrv) GetFeed(_ context.Context, req *common.StoreGetFeedRequest) (*common.StoreGetFeedResponse, error) {
-	// XXX nothing threadsafe
+func (s *gsrv) GetFeed(ctx context.Context, req *common.StoreGetFeedRequest) (*common.StoreGetFeedResponse, error) {
 	fid := req.FeedID
-	// since := ...
 
-	// TODO - selective fetching
-	feed, exists := s.feeds[fid]
-	if !exists {
-		return nil, fmt.Errorf("no feed: %s", fid)
+	articles1, err := s.bend.Query(ctx, fid)
+	if err != nil {
+		return nil, err
 	}
 
-	articles1 := feed.getSomeArticles()
 	articles := make([]*common.StoreArticle, 0, len(articles1))
 	for _, a := range articles1 {
 		articles = append(articles, &common.StoreArticle{
@@ -80,18 +76,12 @@ func (s *gsrv) GetFeed(_ context.Context, req *common.StoreGetFeedRequest) (*com
 	return out, nil
 }
 
-func (s *gsrv) PostFeed(_ context.Context, req *common.StorePostFeedRequest) (*common.StorePostFeedResponse, error) {
+func (s *gsrv) PostFeed(ctx context.Context, req *common.StorePostFeedRequest) (*common.StorePostFeedResponse, error) {
 	// XXX nothing threadsafe
 	fid := req.FeedID
 
-	feed, exists := s.feeds[fid]
-	if !exists {
-		feed = newFeedHolder(fid)
-		s.feeds[feed.id] = feed
-	}
-
 	for _, a := range req.Articles {
-		feed.add(storeArticle{
+		s.bend.Put(ctx, fid, storeArticle{
 			ID:    a.ID,
 			Date:  time.Unix(a.Date, 0),
 			Title: a.Title,

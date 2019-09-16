@@ -13,24 +13,23 @@ var log = logrus.WithField("service", "store")
 
 // New makes a new store
 func New(grpcBind string) common.Service {
-	feeds := someFeeds{}
-
 	return &service{
 		grpcBind: grpcBind,
-		feeds:    feeds,
 	}
 }
 
 type service struct {
 	grpcBind string
-
-	feeds someFeeds
 }
 
 func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
-	gsrvr, err := makeGSrv(s.grpcBind, s.feeds)
+	bend, err := makeBackend()
+	if err != nil {
+		return err
+	}
+	gsrvr, err := makeGSrv(s.grpcBind)
 	if err != nil {
 		return err
 	}
@@ -38,7 +37,10 @@ func (s *service) Start(ctx context.Context) error {
 	grp, gctx := errgroup.WithContext(ctx)
 
 	grp.Go(func() error {
-		return gsrvr.Start(gctx)
+		return bend.Start(gctx)
+	})
+	grp.Go(func() error {
+		return gsrvr.Start(gctx, bend)
 	})
 
 	return grp.Wait()

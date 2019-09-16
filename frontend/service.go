@@ -54,6 +54,5 @@ func (s *service) Start(ctx context.Context) error {
 		return hsrvr.Start(gctx)
 	})
 
-	// TODO - this doesn't wait for HTTP to cleanly end
 	return grp.Wait()
 }
