@@ -4,8 +4,8 @@ IMAGE_NAME=sample-1
 run:
 	go run github.com/undeconstructed/sample/sample test
 
-grpc:
-	protoc -I common/ common/store.proto --go_out=plugins=grpc:common
+gen:
+	go generate
 
 app:
 	mkdir -p _build
