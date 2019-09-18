@@ -22,11 +22,15 @@ type testService struct {
 }
 
 func makeTestService() *testService {
+	self, err := os.Hostname()
+	if err != nil {
+		self = "localhost"
+	}
 	return &testService{
 		services: []common.Service{
-			config.New(":8001", ":8087", "localhost:8002"),
-			fetcher.New("localhost:8001"),
-			frontend.New(":8088", "localhost:8001"),
+			config.New(":8001", ":8087", self+":8002"),
+			fetcher.New(self + ":8001"),
+			frontend.New(":8088", self+":8001"),
 			store.New(":8002"),
 		},
 	}
@@ -35,6 +39,7 @@ func makeTestService() *testService {
 func (ts *testService) Start(ctx context.Context) error {
 	grp, gctx := errgroup.WithContext(ctx)
 	for _, service := range ts.services {
+		log.WithField("state", service).Info("Starting")
 		service := service
 		grp.Go(func() error {
 			return service.Start(gctx)
