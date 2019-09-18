@@ -44,6 +44,11 @@ func (ts *testService) Start(ctx context.Context) error {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		log.Error("no component specified")
+		os.Exit(1)
+	}
+
 	comp := os.Args[1]
 	log.Info("Starting")
 
@@ -61,6 +66,7 @@ func main() {
 	case "store":
 		service = store.New(":8082")
 	default:
+		log.Error("unknown component")
 		os.Exit(1)
 	}
 
