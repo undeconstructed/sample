@@ -22,6 +22,11 @@ func New(httpBind string, configURL string) common.Service {
 	}
 }
 
+// NewFromArgs tries to parse command line args into a service
+func NewFromArgs(args []string) common.Service {
+	return New(":8080", args[0])
+}
+
 type service struct {
 	httpBind  string
 	configURL string

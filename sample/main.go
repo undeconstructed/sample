@@ -21,7 +21,7 @@ type testService struct {
 	services []common.Service
 }
 
-func makeTestService() *testService {
+func makeTestService([]string) common.Service {
 	self, err := os.Hostname()
 	if err != nil {
 		self = "localhost"
@@ -57,23 +57,25 @@ func main() {
 	comp := os.Args[1]
 	log.Info("Starting")
 
-	var service common.Service
+	var makeService func([]string) common.Service
 
 	switch comp {
 	case "test":
-		service = makeTestService()
+		makeService = makeTestService
 	case "config":
-		service = config.New(":8000", ":8080", os.Args[2], os.Args[3])
-	case "frontend":
-		service = frontend.New(":8080", os.Args[2])
+		makeService = config.NewFromArgs
 	case "fetcher":
-		service = fetcher.New(os.Args[2])
+		makeService = fetcher.NewFromArgs
+	case "frontend":
+		makeService = frontend.NewFromArgs
 	case "store":
-		service = store.New(":8000", os.Args[2])
+		makeService = store.NewFromArgs
 	default:
 		log.Error("unknown component")
 		os.Exit(1)
 	}
+
+	service := makeService(os.Args[2:])
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

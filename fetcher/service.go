@@ -19,6 +19,11 @@ func New(configURL string) common.Service {
 	return &service{configURL: configURL}
 }
 
+// NewFromArgs tries to parse command line args into a service
+func NewFromArgs(args []string) common.Service {
+	return New(args[0])
+}
+
 type service struct {
 	configURL string
 }

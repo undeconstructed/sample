@@ -19,6 +19,11 @@ func New(grpcBind string, dataPath string) common.Service {
 	}
 }
 
+// NewFromArgs tries to parse command line args into a service
+func NewFromArgs(args []string) common.Service {
+	return New(":8000", args[0])
+}
+
 type service struct {
 	grpcBind string
 	dataPath string

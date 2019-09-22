@@ -21,6 +21,11 @@ func New(grpcBind, httpBind string, path string, storeURL string) common.Service
 	}
 }
 
+// NewFromArgs tries to parse command line args into a service
+func NewFromArgs(args []string) common.Service {
+	return New(":8000", ":8080", args[0], args[1])
+}
+
 type service struct {
 	grpcBind string
 	httpBind string
