@@ -87,7 +87,7 @@ func writeConfigFile(path string, cfg cfg) ([]byte, error) {
 		return nil, err
 	}
 
-	err = ioutil.WriteFile("config.json", data, 0600)
+	err = ioutil.WriteFile(path, data, 0600)
 	if err != nil {
 		return nil, err
 	}

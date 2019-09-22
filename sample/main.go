@@ -28,7 +28,7 @@ func makeTestService() *testService {
 	}
 	return &testService{
 		services: []common.Service{
-			config.New(":8001", ":8087", self+":8002"),
+			config.New(":8001", ":8087", "config.json", self+":8002"),
 			fetcher.New(self + ":8001"),
 			frontend.New(":8088", self+":8001"),
 			store.New(":8002", "store.db"),
@@ -63,7 +63,7 @@ func main() {
 	case "test":
 		service = makeTestService()
 	case "config":
-		service = config.New(":8000", ":8080", os.Args[2])
+		service = config.New(":8000", ":8080", os.Args[2], os.Args[3])
 	case "frontend":
 		service = frontend.New(":8080", os.Args[2])
 	case "fetcher":

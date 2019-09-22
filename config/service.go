@@ -12,10 +12,11 @@ import (
 var log = logrus.WithField("service", "config")
 
 // New makes a config service
-func New(grpcBind, httpBind string, storeURL string) common.Service {
+func New(grpcBind, httpBind string, path string, storeURL string) common.Service {
 	return &service{
 		grpcBind: grpcBind,
 		httpBind: httpBind,
+		path:     path,
 		storeURL: storeURL,
 	}
 }
@@ -23,13 +24,14 @@ func New(grpcBind, httpBind string, storeURL string) common.Service {
 type service struct {
 	grpcBind string
 	httpBind string
+	path     string
 	storeURL string
 }
 
 func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
-	store, err := makeStore("config.json", s.storeURL)
+	store, err := makeStore(s.path, s.storeURL)
 	if err != nil {
 		return err
 	}

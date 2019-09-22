@@ -9,6 +9,8 @@ spec:
   selector:
     matchLabels:
       app: config
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -16,13 +18,43 @@ spec:
     spec:
       containers:
       - name: config
-        image: 192.168.122.1:5000/sample-1:v1.0.0-2
-        command: [ "/usr/bin/app", "config", "store-0.store:8000" ]
+        image: 192.168.122.1:5000/sample-1:v1.0.0-5
+        command: [ "/usr/bin/app", "config", "/data/config.json", "store-0.store:8000" ]
+        volumeMounts:
+        - name: config-storage
+          mountPath: /data
         ports:
-          - name: grpc
-            containerPort: 8000
-          - name: http
-            containerPort: 8080
+        - name: grpc
+          containerPort: 8000
+        - name: http
+          containerPort: 8080
+      volumes:
+      - name: config-storage
+        persistentVolumeClaim:
+          claimName: config-storage-claim
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: config-storage
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 1Mi
+  accessModes: [ "ReadWriteOnce" ]
+  hostPath:
+    path: "/tmp/config-storage"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: config-storage-claim
+spec:
+  storageClassName: standard
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 1Mi
 ---
 apiVersion: v1
 kind: Service
