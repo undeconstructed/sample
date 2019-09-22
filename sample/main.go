@@ -31,7 +31,7 @@ func makeTestService() *testService {
 			config.New(":8001", ":8087", self+":8002"),
 			fetcher.New(self + ":8001"),
 			frontend.New(":8088", self+":8001"),
-			store.New(":8002"),
+			store.New(":8002", "store.db"),
 		},
 	}
 }
@@ -63,13 +63,13 @@ func main() {
 	case "test":
 		service = makeTestService()
 	case "config":
-		service = config.New(":8081", ":8087", os.Args[2])
+		service = config.New(":8000", ":8080", os.Args[2])
 	case "frontend":
 		service = frontend.New(":8080", os.Args[2])
 	case "fetcher":
 		service = fetcher.New(os.Args[2])
 	case "store":
-		service = store.New(":8082")
+		service = store.New(":8000", os.Args[2])
 	default:
 		log.Error("unknown component")
 		os.Exit(1)

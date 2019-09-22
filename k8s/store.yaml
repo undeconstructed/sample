@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: store
+spec:
+  selector:
+    matchLabels:
+      app: store
+  serviceName: "store"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: store
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: store
+        image: 192.168.122.1:5000/sample-1:v1.0.0-3
+        command: [ "/usr/bin/app", "store", "/data/store.db" ]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        ports:
+          - name: grpc
+            containerPort: 8000
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard"
+      resources:
+        requests:
+          storage: 10Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: store
+  labels:
+    app: store
+spec:
+  selector:
+    app: store
+  ports:
+  - name: grpc
+    port: 8000
+  clusterIP: None

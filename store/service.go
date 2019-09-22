@@ -12,20 +12,22 @@ import (
 var log = logrus.WithField("service", "store")
 
 // New makes a new store
-func New(grpcBind string) common.Service {
+func New(grpcBind string, dataPath string) common.Service {
 	return &service{
 		grpcBind: grpcBind,
+		dataPath: dataPath,
 	}
 }
 
 type service struct {
 	grpcBind string
+	dataPath string
 }
 
 func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
-	bend, err := makeBackend("store.db")
+	bend, err := makeBackend(s.dataPath)
 	if err != nil {
 		return err
 	}

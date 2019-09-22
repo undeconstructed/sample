@@ -16,5 +16,5 @@ spec:
     spec:
       containers:
       - name: fetcher
-        image: 192.168.1.104:5000/sample-1:v1.0.0-2
+        image: 192.168.122.1:5000/sample-1:v1.0.0-2
         command: [ "/usr/bin/app", "fetcher", "config:8000" ]
