@@ -16,9 +16,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 192.168.122.1:5000/sample-1:v1.0.0-6
-        command:
-          - /usr/bin/app
+        image: 192.168.122.1:5000/sample-1:v1.0.0-7
+        args:
           - run
           - frontend
           - --config=config:8000
