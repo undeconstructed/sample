@@ -18,8 +18,13 @@ spec:
     spec:
       containers:
       - name: config
-        image: 192.168.122.1:5000/sample-1:v1.0.0-5
-        command: [ "/usr/bin/app", "config", "/data/config.json", "store-0.store:8000" ]
+        image: 192.168.122.1:5000/sample-1:v1.0.0-6
+        command:
+          - /usr/bin/app
+          - run
+          - config
+          - --data-path=/data/config.json
+          - --default-store=store-0.store:8000
         volumeMounts:
         - name: config-storage
           mountPath: /data

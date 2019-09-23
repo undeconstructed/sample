@@ -86,7 +86,7 @@ xdg-open "$PUBLIC_SERVICE/feed"
 ## Local/test mode
 
 ```
-go run github.com/undeconstructed/sample/sample test
+go run github.com/undeconstructed/sample/sample testmode
 ```
 
 test mode is config http on 8087, frontend http on 8088.

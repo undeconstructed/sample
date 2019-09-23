@@ -15,9 +15,13 @@ spec:
         app: frontend
     spec:
       containers:
-        - name: frontend
-          image: 192.168.122.1:5000/sample-1:v1.0.0-2
-          command: [ "/usr/bin/app", "frontend", "config:8000" ]
-          ports:
-            - name: http
-              containerPort: 8080
+      - name: frontend
+        image: 192.168.122.1:5000/sample-1:v1.0.0-6
+        command:
+          - /usr/bin/app
+          - run
+          - frontend
+          - --config=config:8000
+        ports:
+        - name: http
+          containerPort: 8080
