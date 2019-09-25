@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  labels:
+    app: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        image: 192.168.122.1:5000/sample-1:v1.0.0-7
+        args:
+          - run
+          - auth
+          - --user=user:8000
+        ports:
+        - name: http
+          containerPort: 8080

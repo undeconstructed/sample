@@ -67,6 +67,7 @@ func makeRunAuth() *cobra.Command {
 	}
 	cmd.Flags().StringVarP(&httpBind, "http-bind", "", ":8080", "where to bind HTTP")
 	cmd.Flags().StringVarP(&userURL, "user", "", "", "user URL")
+	cmd.MarkFlagRequired("user")
 
 	return cmd
 }

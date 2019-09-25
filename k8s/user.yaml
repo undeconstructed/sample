@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user
+  labels:
+    app: user
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user
+  template:
+    metadata:
+      labels:
+        app: user
+    spec:
+      containers:
+      - name: user
+        image: 192.168.122.1:5000/sample-1:v1.0.0-7
+        args:
+          - run
+          - user
+          - --config=config:8000
+        ports:
+        - name: grpc
+          containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user
+spec:
+  selector:
+    app: user
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
