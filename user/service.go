@@ -1,4 +1,4 @@
-package store
+package user
 
 import (
 	"context"
@@ -9,28 +9,22 @@ import (
 	"github.com/undeconstructed/sample/common"
 )
 
-var log = logrus.WithField("service", "store")
+var log = logrus.WithField("service", "user")
 
-// New makes a new store
-func New(grpcBind string, dataPath string) common.Service {
+// New makes a new user service
+func New(grpcBind string) common.Service {
 	return &service{
 		grpcBind: grpcBind,
-		dataPath: dataPath,
 	}
 }
 
 type service struct {
 	grpcBind string
-	dataPath string
 }
 
 func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
-	bend, err := makeBackend(s.dataPath)
-	if err != nil {
-		return err
-	}
 	gsrvr, err := makeGSrv(s.grpcBind)
 	if err != nil {
 		return err
@@ -39,10 +33,7 @@ func (s *service) Start(ctx context.Context) error {
 	grp, gctx := errgroup.WithContext(ctx)
 
 	grp.Go(func() error {
-		return bend.Start(gctx)
-	})
-	grp.Go(func() error {
-		return gsrvr.Start(gctx, bend)
+		return gsrvr.Start(gctx)
 	})
 
 	return grp.Wait()

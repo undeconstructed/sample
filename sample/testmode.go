@@ -6,11 +6,13 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/undeconstructed/sample/auth"
 	"github.com/undeconstructed/sample/common"
 	"github.com/undeconstructed/sample/config"
 	"github.com/undeconstructed/sample/fetcher"
 	"github.com/undeconstructed/sample/frontend"
 	"github.com/undeconstructed/sample/store"
+	"github.com/undeconstructed/sample/user"
 )
 
 // testService is just a hacky way to start all the services in one process.
@@ -23,12 +25,22 @@ func makeTestService() common.Service {
 	if err != nil {
 		self = "localhost"
 	}
+
+	authH := self + ":8086"
+	configG := self + ":8001"
+	configH := self + ":8087"
+	frontendH := self + ":8088"
+	storeG := self + ":8002"
+	userG := self + ":8003"
+
 	return &testService{
 		services: []common.Service{
-			config.New(":8001", ":8087", "config.json", self+":8002"),
-			fetcher.New(self + ":8001"),
-			frontend.New(":8088", self+":8001"),
-			store.New(":8002", "store.db"),
+			auth.New(authH, userG),
+			config.New(configG, configH, "config.json", storeG),
+			fetcher.New(configG),
+			frontend.New(frontendH, configG, userG),
+			store.New(storeG, "store.db"),
+			user.New(userG),
 		},
 	}
 }

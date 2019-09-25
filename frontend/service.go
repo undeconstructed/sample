@@ -12,24 +12,21 @@ import (
 var log = logrus.WithField("service", "frontend")
 
 // New makes a new frontend
-func New(httpBind string, configURL string) common.Service {
+func New(httpBind string, configURL string, userURL string) common.Service {
 	articles := &someArticlesX{}
 
 	return &service{
 		httpBind:  httpBind,
 		configURL: configURL,
 		articles:  articles,
+		userURL:   userURL,
 	}
-}
-
-// NewFromArgs tries to parse command line args into a service
-func NewFromArgs(args []string) common.Service {
-	return New(":8080", args[0])
 }
 
 type service struct {
 	httpBind  string
 	configURL string
+	userURL   string
 
 	stopped chan bool
 	stop    context.CancelFunc
