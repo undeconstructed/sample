@@ -51,7 +51,7 @@ func (s *service) doFetch(ctx context.Context) {
 	defer conn.Close()
 	c := common.NewConfigClient(conn)
 
-	work, err := c.GetWork(ctx, &common.Nil{})
+	work, err := c.GetFetchWork(ctx, &common.Nil{})
 	if err != nil {
 		log.WithError(err).Error("Error getting work list")
 		return

@@ -61,25 +61,24 @@ func (s *gsrv) Start(ctx context.Context, sched *sched) error {
 	return grp.Wait()
 }
 
-func (s *gsrv) GetSources(context.Context, *common.Nil) (*common.ConfigSources, error) {
-	sources := make([]*common.ConfigSource, 0)
+func (s *gsrv) GetServeWork(context.Context, *common.Nil) (*common.ServeWork, error) {
+	feeds := make([]*common.ServeFeed, 0, len(s.cfg.Sources))
 
 	for i, src := range s.cfg.Sources {
-		sources = append(sources, &common.ConfigSource{
+		feeds = append(feeds, &common.ServeFeed{
 			ID:    i,
-			URL:   src.URL,
-			Store: src.Store,
+			Store: src.Spec.Store,
 		})
 	}
 
-	out := &common.ConfigSources{
-		Sources: sources,
+	out := &common.ServeWork{
+		Feeds: feeds,
 	}
 
 	return out, nil
 }
 
-func (s *gsrv) GetWork(ctx context.Context, _ *common.Nil) (*common.FetchWork, error) {
+func (s *gsrv) GetFetchWork(ctx context.Context, _ *common.Nil) (*common.FetchWork, error) {
 	out, err := s.sched.getWork(ctx)
 	if err != nil {
 		return nil, err

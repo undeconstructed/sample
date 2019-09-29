@@ -72,7 +72,10 @@ func (s *hsrv) getFeed(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, out)
+		return
 	}
+
+	c.String(http.StatusNotImplemented, "only root")
 }
 
 func (s *hsrv) getItem(c *gin.Context) {

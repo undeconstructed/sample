@@ -56,96 +56,88 @@ func (m *Nil) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Nil proto.InternalMessageInfo
 
-// ConfigSources is a collection of data sources
-type ConfigSources struct {
-	Sources              []*ConfigSource `protobuf:"bytes,1,rep,name=sources,proto3" json:"sources,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
-	XXX_unrecognized     []byte          `json:"-"`
-	XXX_sizecache        int32           `json:"-"`
+// ServeWork is a collection of data sources
+type ServeWork struct {
+	Feeds                []*ServeFeed `protobuf:"bytes,1,rep,name=feeds,proto3" json:"feeds,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *ConfigSources) Reset()         { *m = ConfigSources{} }
-func (m *ConfigSources) String() string { return proto.CompactTextString(m) }
-func (*ConfigSources) ProtoMessage()    {}
-func (*ConfigSources) Descriptor() ([]byte, []int) {
+func (m *ServeWork) Reset()         { *m = ServeWork{} }
+func (m *ServeWork) String() string { return proto.CompactTextString(m) }
+func (*ServeWork) ProtoMessage()    {}
+func (*ServeWork) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3eaf2c85e69e9ea4, []int{1}
 }
 
-func (m *ConfigSources) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ConfigSources.Unmarshal(m, b)
+func (m *ServeWork) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ServeWork.Unmarshal(m, b)
 }
-func (m *ConfigSources) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ConfigSources.Marshal(b, m, deterministic)
+func (m *ServeWork) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ServeWork.Marshal(b, m, deterministic)
 }
-func (m *ConfigSources) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfigSources.Merge(m, src)
+func (m *ServeWork) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ServeWork.Merge(m, src)
 }
-func (m *ConfigSources) XXX_Size() int {
-	return xxx_messageInfo_ConfigSources.Size(m)
+func (m *ServeWork) XXX_Size() int {
+	return xxx_messageInfo_ServeWork.Size(m)
 }
-func (m *ConfigSources) XXX_DiscardUnknown() {
-	xxx_messageInfo_ConfigSources.DiscardUnknown(m)
+func (m *ServeWork) XXX_DiscardUnknown() {
+	xxx_messageInfo_ServeWork.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ConfigSources proto.InternalMessageInfo
+var xxx_messageInfo_ServeWork proto.InternalMessageInfo
 
-func (m *ConfigSources) GetSources() []*ConfigSource {
+func (m *ServeWork) GetFeeds() []*ServeFeed {
 	if m != nil {
-		return m.Sources
+		return m.Feeds
 	}
 	return nil
 }
 
-// ConfigSource defines a remote data source
-type ConfigSource struct {
+// ServeFeed defines a remote data source
+type ServeFeed struct {
 	ID                   string   `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
-	URL                  string   `protobuf:"bytes,2,opt,name=URL,proto3" json:"URL,omitempty"`
 	Store                string   `protobuf:"bytes,3,opt,name=store,proto3" json:"store,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ConfigSource) Reset()         { *m = ConfigSource{} }
-func (m *ConfigSource) String() string { return proto.CompactTextString(m) }
-func (*ConfigSource) ProtoMessage()    {}
-func (*ConfigSource) Descriptor() ([]byte, []int) {
+func (m *ServeFeed) Reset()         { *m = ServeFeed{} }
+func (m *ServeFeed) String() string { return proto.CompactTextString(m) }
+func (*ServeFeed) ProtoMessage()    {}
+func (*ServeFeed) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3eaf2c85e69e9ea4, []int{2}
 }
 
-func (m *ConfigSource) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ConfigSource.Unmarshal(m, b)
+func (m *ServeFeed) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ServeFeed.Unmarshal(m, b)
 }
-func (m *ConfigSource) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ConfigSource.Marshal(b, m, deterministic)
+func (m *ServeFeed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ServeFeed.Marshal(b, m, deterministic)
 }
-func (m *ConfigSource) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfigSource.Merge(m, src)
+func (m *ServeFeed) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ServeFeed.Merge(m, src)
 }
-func (m *ConfigSource) XXX_Size() int {
-	return xxx_messageInfo_ConfigSource.Size(m)
+func (m *ServeFeed) XXX_Size() int {
+	return xxx_messageInfo_ServeFeed.Size(m)
 }
-func (m *ConfigSource) XXX_DiscardUnknown() {
-	xxx_messageInfo_ConfigSource.DiscardUnknown(m)
+func (m *ServeFeed) XXX_DiscardUnknown() {
+	xxx_messageInfo_ServeFeed.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ConfigSource proto.InternalMessageInfo
+var xxx_messageInfo_ServeFeed proto.InternalMessageInfo
 
-func (m *ConfigSource) GetID() string {
+func (m *ServeFeed) GetID() string {
 	if m != nil {
 		return m.ID
 	}
 	return ""
 }
 
-func (m *ConfigSource) GetURL() string {
-	if m != nil {
-		return m.URL
-	}
-	return ""
-}
-
-func (m *ConfigSource) GetStore() string {
+func (m *ServeFeed) GetStore() string {
 	if m != nil {
 		return m.Store
 	}
@@ -250,8 +242,8 @@ func (m *FetchJob) GetStore() string {
 
 func init() {
 	proto.RegisterType((*Nil)(nil), "common.Nil")
-	proto.RegisterType((*ConfigSources)(nil), "common.ConfigSources")
-	proto.RegisterType((*ConfigSource)(nil), "common.ConfigSource")
+	proto.RegisterType((*ServeWork)(nil), "common.ServeWork")
+	proto.RegisterType((*ServeFeed)(nil), "common.ServeFeed")
 	proto.RegisterType((*FetchWork)(nil), "common.FetchWork")
 	proto.RegisterType((*FetchJob)(nil), "common.FetchJob")
 }
@@ -259,22 +251,22 @@ func init() {
 func init() { proto.RegisterFile("config.proto", fileDescriptor_3eaf2c85e69e9ea4) }
 
 var fileDescriptor_3eaf2c85e69e9ea4 = []byte{
-	// 235 bytes of a gzipped FileDescriptorProto
+	// 228 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x49, 0xce, 0xcf, 0x4b,
 	0xcb, 0x4c, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4b, 0xce, 0xcf, 0xcd, 0xcd, 0xcf,
-	0x53, 0x62, 0xe5, 0x62, 0xf6, 0xcb, 0xcc, 0x51, 0xb2, 0xe7, 0xe2, 0x75, 0x06, 0x4b, 0x07, 0xe7,
-	0x97, 0x16, 0x25, 0xa7, 0x16, 0x0b, 0xe9, 0x71, 0xb1, 0x17, 0x43, 0x98, 0x12, 0x8c, 0x0a, 0xcc,
-	0x1a, 0xdc, 0x46, 0x22, 0x7a, 0x10, 0x1d, 0x7a, 0xc8, 0xea, 0x82, 0x60, 0x8a, 0x94, 0xdc, 0xb8,
-	0x78, 0x90, 0x25, 0x84, 0xf8, 0xb8, 0x98, 0x3c, 0x5d, 0x24, 0x18, 0x15, 0x18, 0x35, 0x38, 0x83,
-	0x98, 0x3c, 0x5d, 0x84, 0x04, 0xb8, 0x98, 0x43, 0x83, 0x7c, 0x24, 0x98, 0xc0, 0x02, 0x20, 0xa6,
-	0x90, 0x08, 0x17, 0x6b, 0x71, 0x49, 0x7e, 0x51, 0xaa, 0x04, 0x33, 0x58, 0x0c, 0xc2, 0x51, 0x32,
-	0xe4, 0xe2, 0x74, 0x4b, 0x2d, 0x49, 0xce, 0x08, 0xcf, 0x2f, 0xca, 0x16, 0x52, 0xe1, 0x62, 0xc9,
-	0xca, 0x4f, 0x82, 0xb9, 0x40, 0x00, 0xe6, 0x02, 0xb0, 0x02, 0xaf, 0xfc, 0xa4, 0x20, 0xb0, 0xac,
-	0x92, 0x13, 0x17, 0x07, 0x4c, 0x84, 0x5c, 0x6b, 0x8d, 0x32, 0xb9, 0xd8, 0x20, 0xce, 0x17, 0x32,
-	0xe2, 0xe2, 0x72, 0x4f, 0x2d, 0x81, 0x05, 0x03, 0x37, 0xcc, 0x4e, 0xbf, 0xcc, 0x1c, 0x29, 0x51,
-	0x6c, 0x41, 0x50, 0xac, 0xc4, 0x20, 0xa4, 0xcd, 0xc5, 0xee, 0x9e, 0x5a, 0x02, 0x76, 0x32, 0x8a,
-	0x06, 0x41, 0x14, 0x17, 0x83, 0xe4, 0x95, 0x18, 0x92, 0xd8, 0xc0, 0x11, 0x60, 0x0c, 0x08, 0x00,
-	0x00, 0xff, 0xff, 0x7c, 0x2f, 0x75, 0x59, 0x90, 0x01, 0x00, 0x00,
+	0x53, 0x62, 0xe5, 0x62, 0xf6, 0xcb, 0xcc, 0x51, 0x32, 0xe1, 0xe2, 0x0c, 0x4e, 0x2d, 0x2a, 0x4b,
+	0x0d, 0xcf, 0x2f, 0xca, 0x16, 0x52, 0xe7, 0x62, 0x4d, 0x4b, 0x4d, 0x4d, 0x29, 0x96, 0x60, 0x54,
+	0x60, 0xd6, 0xe0, 0x36, 0x12, 0xd4, 0x83, 0xa8, 0xd5, 0x03, 0xab, 0x70, 0x4b, 0x4d, 0x4d, 0x09,
+	0x82, 0xc8, 0x2b, 0x19, 0x42, 0x75, 0x81, 0xc4, 0x84, 0xf8, 0xb8, 0x98, 0x3c, 0x5d, 0x24, 0x18,
+	0x15, 0x18, 0x35, 0x38, 0x83, 0x98, 0x3c, 0x5d, 0x84, 0x44, 0xb8, 0x58, 0x8b, 0x4b, 0xf2, 0x8b,
+	0x52, 0x25, 0x98, 0xc1, 0x42, 0x10, 0x0e, 0x48, 0x8b, 0x5b, 0x6a, 0x49, 0x72, 0x06, 0xd8, 0x22,
+	0x15, 0x2e, 0x96, 0xac, 0xfc, 0x24, 0x98, 0x3d, 0x02, 0x30, 0x7b, 0xc0, 0x0a, 0xbc, 0xf2, 0x93,
+	0x82, 0xc0, 0xb2, 0x4a, 0x4e, 0x5c, 0x1c, 0x30, 0x11, 0x0c, 0x4b, 0x04, 0xb8, 0x98, 0x43, 0x83,
+	0x7c, 0x24, 0x98, 0xc0, 0x02, 0x20, 0x26, 0x76, 0x6b, 0x8d, 0x72, 0xb8, 0xd8, 0x9c, 0xc1, 0xde,
+	0x17, 0x32, 0xe0, 0xe2, 0x71, 0x4f, 0x2d, 0x41, 0x78, 0x96, 0x1b, 0x66, 0xab, 0x5f, 0x66, 0x8e,
+	0x14, 0xaa, 0x57, 0x41, 0xf2, 0x4a, 0x0c, 0x50, 0x1d, 0x08, 0x57, 0x63, 0xd7, 0x01, 0x97, 0x57,
+	0x62, 0x48, 0x62, 0x03, 0x87, 0xb1, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x6e, 0xc4, 0xf3, 0x69,
+	0x73, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -289,8 +281,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ConfigClient interface {
-	GetSources(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*ConfigSources, error)
-	GetWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*FetchWork, error)
+	GetServeWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*ServeWork, error)
+	GetFetchWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*FetchWork, error)
 }
 
 type configClient struct {
@@ -301,18 +293,18 @@ func NewConfigClient(cc *grpc.ClientConn) ConfigClient {
 	return &configClient{cc}
 }
 
-func (c *configClient) GetSources(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*ConfigSources, error) {
-	out := new(ConfigSources)
-	err := c.cc.Invoke(ctx, "/common.Config/GetSources", in, out, opts...)
+func (c *configClient) GetServeWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*ServeWork, error) {
+	out := new(ServeWork)
+	err := c.cc.Invoke(ctx, "/common.Config/GetServeWork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *configClient) GetWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*FetchWork, error) {
+func (c *configClient) GetFetchWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*FetchWork, error) {
 	out := new(FetchWork)
-	err := c.cc.Invoke(ctx, "/common.Config/GetWork", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/common.Config/GetFetchWork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -321,57 +313,57 @@ func (c *configClient) GetWork(ctx context.Context, in *Nil, opts ...grpc.CallOp
 
 // ConfigServer is the server API for Config service.
 type ConfigServer interface {
-	GetSources(context.Context, *Nil) (*ConfigSources, error)
-	GetWork(context.Context, *Nil) (*FetchWork, error)
+	GetServeWork(context.Context, *Nil) (*ServeWork, error)
+	GetFetchWork(context.Context, *Nil) (*FetchWork, error)
 }
 
 // UnimplementedConfigServer can be embedded to have forward compatible implementations.
 type UnimplementedConfigServer struct {
 }
 
-func (*UnimplementedConfigServer) GetSources(ctx context.Context, req *Nil) (*ConfigSources, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSources not implemented")
+func (*UnimplementedConfigServer) GetServeWork(ctx context.Context, req *Nil) (*ServeWork, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServeWork not implemented")
 }
-func (*UnimplementedConfigServer) GetWork(ctx context.Context, req *Nil) (*FetchWork, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWork not implemented")
+func (*UnimplementedConfigServer) GetFetchWork(ctx context.Context, req *Nil) (*FetchWork, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFetchWork not implemented")
 }
 
 func RegisterConfigServer(s *grpc.Server, srv ConfigServer) {
 	s.RegisterService(&_Config_serviceDesc, srv)
 }
 
-func _Config_GetSources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Config_GetServeWork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Nil)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConfigServer).GetSources(ctx, in)
+		return srv.(ConfigServer).GetServeWork(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/common.Config/GetSources",
+		FullMethod: "/common.Config/GetServeWork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServer).GetSources(ctx, req.(*Nil))
+		return srv.(ConfigServer).GetServeWork(ctx, req.(*Nil))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Config_GetWork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Config_GetFetchWork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Nil)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ConfigServer).GetWork(ctx, in)
+		return srv.(ConfigServer).GetFetchWork(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/common.Config/GetWork",
+		FullMethod: "/common.Config/GetFetchWork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServer).GetWork(ctx, req.(*Nil))
+		return srv.(ConfigServer).GetFetchWork(ctx, req.(*Nil))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -381,12 +373,12 @@ var _Config_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*ConfigServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetSources",
-			Handler:    _Config_GetSources_Handler,
+			MethodName: "GetServeWork",
+			Handler:    _Config_GetServeWork_Handler,
 		},
 		{
-			MethodName: "GetWork",
-			Handler:    _Config_GetWork_Handler,
+			MethodName: "GetFetchWork",
+			Handler:    _Config_GetFetchWork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -4,22 +4,21 @@ package common;
 
 // Config service
 service Config {
-  rpc GetSources (Nil) returns (ConfigSources) {}
-  rpc GetWork (Nil) returns (FetchWork) {}
+  rpc GetServeWork (Nil) returns (ServeWork) {}
+  rpc GetFetchWork (Nil) returns (FetchWork) {}
 }
 
 // Nil is nil
 message Nil {}
 
-// ConfigSources is a collection of data sources
-message ConfigSources {
-  repeated ConfigSource sources = 1;
+// ServeWork is a collection of data sources
+message ServeWork {
+  repeated ServeFeed feeds = 1;
 }
 
-// ConfigSource defines a remote data source
-message ConfigSource {
+// ServeFeed defines a remote data source
+message ServeFeed {
   string ID = 1;
-  string URL = 2;
   string store = 3;
 }
 

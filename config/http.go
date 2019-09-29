@@ -69,24 +69,20 @@ func (s *hsrv) Start(ctx context.Context, store *store) error {
 }
 
 func (s *hsrv) getSources(c *gin.Context) {
-	sources := []common.SourceConfig{}
+	sources := []common.RestSource{}
 
-	for i, src := range s.cfg.Sources {
-		// XXX - currently this just copies the slice for no reason
-		sources = append(sources, common.SourceConfig{
-			ID:    i,
-			URL:   src.URL,
-			Store: src.Store,
-		})
+	for _, src := range s.cfg.Sources {
+		src := src
+		sources = append(sources, src)
 	}
 
-	c.JSON(http.StatusOK, common.SourcesConfig{
+	c.JSON(http.StatusOK, common.RestSources{
 		Sources: sources,
 	})
 }
 
 func (s *hsrv) putSource(c *gin.Context) {
-	in := common.SourceConfig{}
+	in := common.RestSource{}
 	sid := c.Param("id")
 	err := c.Bind(&in)
 	if err != nil {
@@ -117,7 +113,7 @@ func (s *hsrv) getSource(c *gin.Context) {
 
 func (s *hsrv) deleteSource(c *gin.Context) {
 	sid := c.Param("id")
-	in := common.SourceConfig{ID: sid}
+	in := common.RestSource{ID: sid}
 
 	err := s.store.Update([]interface{}{in})
 	if err != nil {

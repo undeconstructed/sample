@@ -12,7 +12,7 @@ type schedReq struct {
 }
 
 type schedEntry struct {
-	source common.SourceConfig
+	source common.RestSource
 	time   int64
 }
 
@@ -65,8 +65,8 @@ func (s *sched) loop(ctx context.Context) error {
 					Jobs: []*common.FetchJob{
 						&common.FetchJob{
 							ID:    toDo.source.ID,
-							URL:   toDo.source.URL,
-							Store: toDo.source.Store,
+							URL:   toDo.source.Spec.URL,
+							Store: toDo.source.Spec.Store,
 						},
 					},
 				}
@@ -95,7 +95,7 @@ func (s *sched) getWork(ctx context.Context) (common.FetchWork, error) {
 	}
 }
 
-func updateTable(table schedTable, sources map[string]common.SourceConfig) schedTable {
+func updateTable(table schedTable, sources map[string]common.RestSource) schedTable {
 	ntable := schedTable{}
 	for _, source := range sources {
 		old, exists := table[source.ID]

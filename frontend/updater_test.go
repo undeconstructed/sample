@@ -8,8 +8,8 @@ import (
 )
 
 func TestMerge(t *testing.T) {
-	i := map[string]*sourceCache{}
-	i["s1"] = &sourceCache{
+	i := map[string]*feedCache{}
+	i["s1"] = &feedCache{
 		articles: []common.OutputArticle{
 			{
 				Source: "s1",
@@ -23,7 +23,7 @@ func TestMerge(t *testing.T) {
 			},
 		},
 	}
-	i["s2"] = &sourceCache{
+	i["s2"] = &feedCache{
 		articles: []common.OutputArticle{
 			{
 				Source: "s2",
@@ -62,7 +62,7 @@ func TestRemoveOldArticles(t *testing.T) {
 		{
 			Source: "s1",
 			ID:     "4",
-			Date:   time.Unix(3, 0),
+			Date:   time.Unix(4, 0),
 		},
 	}
 	r := removeOldArticles(i, time.Unix(3, 0))

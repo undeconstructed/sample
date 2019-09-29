@@ -10,16 +10,27 @@ type Service interface {
 	Start(context.Context) error
 }
 
-// SourceConfig to put new sources into config server.
-type SourceConfig struct {
-	ID    string `json:"id"`
+// RestSource is a source as known by the config service
+type RestSource struct {
+	ID     string           `json:"id"`
+	Spec   RestSourceSpec   `json:"spec"`
+	Status RestSourceStatus `json:"status"`
+}
+
+// RestSourceSpec to put new sources into config server.
+type RestSourceSpec struct {
 	URL   string `json:"url"`
 	Store string `json:"store"`
 }
 
-// SourcesConfig is a list of sources
-type SourcesConfig struct {
-	Sources []SourceConfig `json:"sources"`
+// RestSourceStatus is how a source appears to be functioning
+type RestSourceStatus struct {
+	LastStatus string `json:"lastStatus"`
+}
+
+// RestSources is a list of sources
+type RestSources struct {
+	Sources []RestSource `json:"sources"`
 }
 
 // OutputFeed is how the frontend serves data.

@@ -9,15 +9,15 @@ import (
 	"github.com/undeconstructed/sample/common"
 )
 
-type sourceCache struct {
-	config   common.ConfigSource
+type feedCache struct {
+	config   common.ServeFeed
 	articles []common.OutputArticle
 }
 
 type updater struct {
 	configURL string
 
-	caches     map[string]*sourceCache
+	caches     map[string]*feedCache
 	lastUpdate time.Time
 	articles   someArticles
 }
@@ -25,7 +25,7 @@ type updater struct {
 func makeUpdater(configURL string, articles someArticles) (*updater, error) {
 	return &updater{
 		configURL: configURL,
-		caches:    map[string]*sourceCache{},
+		caches:    map[string]*feedCache{},
 		articles:  articles,
 	}, nil
 }
@@ -59,19 +59,21 @@ func (s *updater) updateSources() {
 	defer conn.Close()
 	c := common.NewConfigClient(conn)
 
-	sources, err := c.GetSources(context.Background(), &common.Nil{})
+	work, err := c.GetServeWork(context.Background(), &common.Nil{})
 	if err != nil {
 		log.WithError(err).Error("Error getting source list")
 		return
 	}
 
-	newCaches := map[string]*sourceCache{}
-	for _, source := range sources.Sources {
-		cache, exists := s.caches[source.ID]
+	newCaches := map[string]*feedCache{}
+	for _, feed := range work.Feeds {
+		cache, exists := s.caches[feed.ID]
 		if !exists {
-			cache = &sourceCache{}
+			cache = &feedCache{
+				config: *feed,
+			}
 		}
-		newCaches[source.ID] = cache
+		newCaches[feed.ID] = cache
 	}
 
 	s.caches = newCaches
@@ -92,14 +94,14 @@ func removeOldArticles(list []common.OutputArticle, before time.Time) []common.O
 		}
 		i++
 	}
-	newArticles := make([]common.OutputArticle, 0, len(list)-i)
+	newArticles := make([]common.OutputArticle, len(list)-i)
 	copy(newArticles, list[i:])
 	return newArticles
 }
 
 // get any new articles from the store
 func (s *updater) updateFeeds(since time.Time) {
-	for _, cache := range s.caches {
+	for feedID, cache := range s.caches {
 
 		conn, err := grpc.Dial(cache.config.Store, grpc.WithInsecure())
 		if err != nil {
@@ -110,7 +112,7 @@ func (s *updater) updateFeeds(since time.Time) {
 		c := common.NewStoreClient(conn)
 
 		req := &common.StoreGetFeedRequest{
-			FeedID: cache.config.ID,
+			FeedID: feedID,
 		}
 
 		res, err := c.GetFeed(context.Background(), req)
@@ -122,7 +124,7 @@ func (s *updater) updateFeeds(since time.Time) {
 		newArticles := make([]common.OutputArticle, 0, len(res.Articles))
 		for _, a := range res.Articles {
 			newArticles = append(newArticles, common.OutputArticle{
-				Source: a.ID,
+				Source: feedID,
 				ID:     a.ID,
 				Title:  a.Title,
 				Date:   time.Unix(a.Date, 0),
@@ -134,7 +136,7 @@ func (s *updater) updateFeeds(since time.Time) {
 	}
 }
 
-func merge(caches map[string]*sourceCache) []common.OutputArticle {
+func merge(caches map[string]*feedCache) []common.OutputArticle {
 	inputs := [][]common.OutputArticle{}
 	for _, cache := range caches {
 		inputs = append(inputs, cache.articles)

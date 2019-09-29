@@ -57,7 +57,7 @@ kubectl apply -f k8s/
 Get the virtual service URLs from minikube:
 
 ```
-CONFIG=$(minikube service --url=true config-public
+CONFIG=$(minikube service --url=true config-public)
 PUBLIC_SERVICE=$(minikube service --url=true public-service)
 ```
 
@@ -92,9 +92,12 @@ go run github.com/undeconstructed/sample/sample testmode
 test mode is config http on 8087, frontend http on 8088.
 
 ```
-curl -XPUT -H"content-type: application/json" localhost:8087/sources/bbc -d '{"url":"http://feeds.bbci.co.uk/news/uk/rss.xml"}'
+CONFIG="$(hostname):8087"
+PUBLIC_SERVICE="$(hostname):8088"
 
-curl 'localhost:8088/feed?query=asdasd'
+curl -XPUT -H"content-type: application/json" "$CONFIG/sources/bbc" -d '{"url":"http://feeds.bbci.co.uk/news/uk/rss.xml"}'
+
+curl "$PUBLIC_SERVICE/feed?query=asdasd"
 ```
 
 ## Directories

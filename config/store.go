@@ -14,7 +14,7 @@ type cchange struct {
 }
 
 type cfg struct {
-	Sources map[string]common.SourceConfig `json:"sources"`
+	Sources map[string]common.RestSource `json:"sources"`
 }
 
 type store struct {
@@ -41,7 +41,7 @@ func (s *store) Start(ctx context.Context) error {
 	if err != nil {
 		log.WithError(err).Info("Using blank new config")
 		cfg0 = cfg{
-			Sources: map[string]common.SourceConfig{},
+			Sources: map[string]common.RestSource{},
 		}
 
 		bytes, err = writeConfigFile(s.path, cfg0)
@@ -104,15 +104,17 @@ func (s *store) write(changes []interface{}) error {
 
 	for _, change := range changes {
 		switch c := change.(type) {
-		case common.SourceConfig:
-			if c.URL != "" {
-				if c.Store == "" {
-					c.Store = s.storeURL
-				}
-				cfg.Sources[c.ID] = c
-			} else {
+		case common.RestSource:
+			// delete
+			if c.Spec.URL == "" {
 				delete(cfg.Sources, c.ID)
+				break
 			}
+			// create, update
+			if c.Spec.Store == "" {
+				c.Spec.Store = s.storeURL
+			}
+			cfg.Sources[c.ID] = c
 		}
 	}
 
