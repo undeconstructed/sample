@@ -58,14 +58,21 @@ func (s *hsrv) getFeed(c *gin.Context) {
 	query := c.Query("query")
 	from := c.Query("from")
 
-	// TODO - selecting articles
-	out := common.OutputFeed{
-		Query:    query,
-		Next:     from + "plus",
-		Articles: s.articles.list,
-	}
+	if from == "" && query == "" {
+		articles := make([]common.OutputArticle, 0, 10)
 
-	c.JSON(http.StatusOK, out)
+		for i := len(s.articles.list) - 1; i >= 0; i-- {
+			articles = append(articles, s.articles.list[i])
+		}
+
+		out := common.OutputFeed{
+			Query:    query,
+			Next:     from + "plus",
+			Articles: articles,
+		}
+
+		c.JSON(http.StatusOK, out)
+	}
 }
 
 func (s *hsrv) getItem(c *gin.Context) {

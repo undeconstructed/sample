@@ -9,10 +9,15 @@ import (
 	"github.com/undeconstructed/sample/common"
 )
 
+type sourceCache struct {
+	config   common.ConfigSource
+	articles []common.OutputArticle
+}
+
 type updater struct {
 	configURL string
 
-	sources    []*common.ConfigSource
+	caches     map[string]*sourceCache
 	lastUpdate time.Time
 	articles   someArticles
 }
@@ -20,6 +25,7 @@ type updater struct {
 func makeUpdater(configURL string, articles someArticles) (*updater, error) {
 	return &updater{
 		configURL: configURL,
+		caches:    map[string]*sourceCache{},
 		articles:  articles,
 	}, nil
 }
@@ -31,6 +37,7 @@ func (s *updater) Start(ctx context.Context) error {
 		s.updateSources()
 		s.purgeArticles(now)
 		s.updateFeeds(s.lastUpdate)
+		s.articles.list = merge(s.caches)
 		s.lastUpdate = now
 		t := time.After(10 * time.Second)
 		select {
@@ -58,19 +65,43 @@ func (s *updater) updateSources() {
 		return
 	}
 
-	// atomic replace of whole list
-	s.sources = sources.Sources
+	newCaches := map[string]*sourceCache{}
+	for _, source := range sources.Sources {
+		cache, exists := s.caches[source.ID]
+		if !exists {
+			cache = &sourceCache{}
+		}
+		newCaches[source.ID] = cache
+	}
+
+	s.caches = newCaches
 }
 
 // get rid of old things
 func (s *updater) purgeArticles(before time.Time) {
+	for _, cache := range s.caches {
+		cache.articles = removeOldArticles(cache.articles, before)
+	}
+}
+
+func removeOldArticles(list []common.OutputArticle, before time.Time) []common.OutputArticle {
+	i := 0
+	for _, article := range list {
+		if !article.Date.Before(before) {
+			break
+		}
+		i++
+	}
+	newArticles := make([]common.OutputArticle, 0, len(list)-i)
+	copy(newArticles, list[i:])
+	return newArticles
 }
 
 // get any new articles from the store
 func (s *updater) updateFeeds(since time.Time) {
-	for _, source := range s.sources {
+	for _, cache := range s.caches {
 
-		conn, err := grpc.Dial(source.Store, grpc.WithInsecure())
+		conn, err := grpc.Dial(cache.config.Store, grpc.WithInsecure())
 		if err != nil {
 			log.WithError(err).Error("Error connecting to store")
 			return
@@ -79,7 +110,7 @@ func (s *updater) updateFeeds(since time.Time) {
 		c := common.NewStoreClient(conn)
 
 		req := &common.StoreGetFeedRequest{
-			FeedID: source.ID,
+			FeedID: cache.config.ID,
 		}
 
 		res, err := c.GetFeed(context.Background(), req)
@@ -99,7 +130,36 @@ func (s *updater) updateFeeds(since time.Time) {
 			})
 		}
 
-		// TODO - merge, not replace
-		s.articles.list = newArticles
+		cache.articles = newArticles
 	}
+}
+
+func merge(caches map[string]*sourceCache) []common.OutputArticle {
+	inputs := [][]common.OutputArticle{}
+	for _, cache := range caches {
+		inputs = append(inputs, cache.articles)
+	}
+
+	newArticles := []common.OutputArticle{}
+	for {
+		next := -1
+		var nextT *time.Time
+		for i, input := range inputs {
+			if len(input) > 0 {
+				t := input[0].Date
+				if nextT == nil || t.Before(*nextT) {
+					nextT = &t
+					next = i
+				}
+			}
+		}
+		if next == -1 {
+			break
+		}
+		source := inputs[next]
+		newArticles = append(newArticles, source[0])
+		inputs[next] = source[1:]
+	}
+
+	return newArticles
 }
