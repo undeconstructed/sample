@@ -3,6 +3,7 @@ package fetcher
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/mmcdole/gofeed"
 	"github.com/sirupsen/logrus"
@@ -28,7 +29,7 @@ func (s *service) Start(ctx context.Context) error {
 
 	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
 	if err != nil {
-		log.WithError(err).Error("Error connecting to config")
+		log.WithError(err).Error("Error dialing config")
 		return err
 	}
 	defer conn.Close()
@@ -54,6 +55,11 @@ func doFetch(ctx context.Context, config common.ConfigClient) {
 	work, err := config.GetFetchWork(ctx, &common.Nil{})
 	if err != nil {
 		log.WithError(err).Error("Error getting work list")
+		// enforce a pause in a basic way
+		select {
+		case <-time.After(1 * time.Second):
+		case <-ctx.Done():
+		}
 		return
 	}
 
