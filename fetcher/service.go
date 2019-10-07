@@ -26,11 +26,19 @@ type service struct {
 func (s *service) Start(ctx context.Context) error {
 	log.Info("Starting")
 
+	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
+	if err != nil {
+		log.WithError(err).Error("Error connecting to config")
+		return err
+	}
+	defer conn.Close()
+	config := common.NewConfigClient(conn)
+
 	grp, gctx := errgroup.WithContext(ctx)
 
 	grp.Go(func() error {
 		for {
-			s.doFetch(gctx)
+			doFetch(gctx, config)
 			select {
 			case <-gctx.Done():
 				return gctx.Err()
@@ -42,16 +50,8 @@ func (s *service) Start(ctx context.Context) error {
 	return grp.Wait()
 }
 
-func (s *service) doFetch(ctx context.Context) {
-	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
-	if err != nil {
-		log.WithError(err).Error("Error connecting to config")
-		return
-	}
-	defer conn.Close()
-	c := common.NewConfigClient(conn)
-
-	work, err := c.GetFetchWork(ctx, &common.Nil{})
+func doFetch(ctx context.Context, config common.ConfigClient) {
+	work, err := config.GetFetchWork(ctx, &common.Nil{})
 	if err != nil {
 		log.WithError(err).Error("Error getting work list")
 		return

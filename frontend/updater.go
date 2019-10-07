@@ -14,31 +14,45 @@ type feedCache struct {
 	articles []common.OutputArticle
 }
 
+type feedCaches map[string]*feedCache
+
 type updater struct {
 	configURL string
 
-	caches     map[string]*feedCache
+	caches     feedCaches
 	lastUpdate time.Time
-	articles   someArticles
+	index      *ArticleIndex
 }
 
-func makeUpdater(configURL string, articles someArticles) (*updater, error) {
+func makeUpdater(configURL string) (*updater, error) {
 	return &updater{
 		configURL: configURL,
 		caches:    map[string]*feedCache{},
-		articles:  articles,
 	}, nil
 }
 
-func (s *updater) Start(ctx context.Context) error {
-	// could update on request instead, of course
+func (s *updater) Start(ctx context.Context, index *ArticleIndex) error {
+	s.index = index
+
+	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
+	if err != nil {
+		log.WithError(err).Error("Error getting source list")
+		return err
+	}
+	defer conn.Close()
+	config := common.NewConfigClient(conn)
+
 	for {
 		now := time.Now()
-		s.updateSources()
-		s.purgeArticles(now)
-		s.updateFeeds(s.lastUpdate)
-		s.articles.list = merge(s.caches)
+		s.caches = updateSources(ctx, config, s.caches)
+		for _, cache := range s.caches {
+			exp := now.Add(-24 * time.Hour)
+			cache.articles = removeOldArticles(cache.articles, exp)
+		}
+		updateFeeds(s.lastUpdate, s.caches)
+		s.index.Update(merge(s.caches))
 		s.lastUpdate = now
+
 		t := time.After(10 * time.Second)
 		select {
 		case <-t:
@@ -50,24 +64,16 @@ func (s *updater) Start(ctx context.Context) error {
 }
 
 // find out what sources exist
-func (s *updater) updateSources() {
-	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
+func updateSources(ctx context.Context, config common.ConfigClient, oldCaches feedCaches) feedCaches {
+	work, err := config.GetServeWork(ctx, &common.Nil{})
 	if err != nil {
 		log.WithError(err).Error("Error getting source list")
-		return
-	}
-	defer conn.Close()
-	c := common.NewConfigClient(conn)
-
-	work, err := c.GetServeWork(context.Background(), &common.Nil{})
-	if err != nil {
-		log.WithError(err).Error("Error getting source list")
-		return
+		return oldCaches
 	}
 
 	newCaches := map[string]*feedCache{}
 	for _, feed := range work.Feeds {
-		cache, exists := s.caches[feed.ID]
+		cache, exists := oldCaches[feed.ID]
 		if !exists {
 			cache = &feedCache{
 				config: *feed,
@@ -76,14 +82,7 @@ func (s *updater) updateSources() {
 		newCaches[feed.ID] = cache
 	}
 
-	s.caches = newCaches
-}
-
-// get rid of old things
-func (s *updater) purgeArticles(before time.Time) {
-	for _, cache := range s.caches {
-		cache.articles = removeOldArticles(cache.articles, before)
-	}
+	return newCaches
 }
 
 func removeOldArticles(list []common.OutputArticle, before time.Time) []common.OutputArticle {
@@ -100,9 +99,8 @@ func removeOldArticles(list []common.OutputArticle, before time.Time) []common.O
 }
 
 // get any new articles from the store
-func (s *updater) updateFeeds(since time.Time) {
-	for feedID, cache := range s.caches {
-
+func updateFeeds(since time.Time, caches feedCaches) {
+	for feedID, cache := range caches {
 		conn, err := grpc.Dial(cache.config.Store, grpc.WithInsecure())
 		if err != nil {
 			log.WithError(err).Error("Error connecting to store")

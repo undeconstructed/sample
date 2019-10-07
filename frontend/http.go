@@ -14,21 +14,22 @@ import (
 type hsrv struct {
 	listener net.Listener
 
-	articles someArticles
+	index *ArticleIndex
 }
 
-func makeHSrv(bind string, articles someArticles) (*hsrv, error) {
+func makeHSrv(bind string) (*hsrv, error) {
 	l, err := net.Listen("tcp", bind)
 	if err != nil {
 		return nil, err
 	}
 	return &hsrv{
 		listener: l,
-		articles: articles,
 	}, nil
 }
 
-func (s *hsrv) Start(ctx context.Context) error {
+func (s *hsrv) Start(ctx context.Context, index *ArticleIndex) error {
+	s.index = index
+
 	router := gin.Default()
 	router.GET("/feed", s.getFeed)
 	router.GET("/items/:id", s.getItem)
@@ -59,11 +60,7 @@ func (s *hsrv) getFeed(c *gin.Context) {
 	from := c.Query("from")
 
 	if from == "" && query == "" {
-		articles := make([]common.OutputArticle, 0, 10)
-
-		for i := len(s.articles.list) - 1; i >= 0; i-- {
-			articles = append(articles, s.articles.list[i])
-		}
+		articles := s.index.Query()
 
 		out := common.OutputFeed{
 			Query:    query,
