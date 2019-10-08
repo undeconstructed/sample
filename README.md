@@ -65,7 +65,7 @@ Make some config:
 
 ```
 curl -XPUT -H"content-type: application/json" "$CONFIG/sources/bbc" \
-  -d '{"url":"http://feeds.bbci.co.uk/news/uk/rss.xml","store":"store-0.store:8000"}'
+  -d '{ "spec": { url": "http://feeds.bbci.co.uk/news/uk/rss.xml", "store": "store-0.store:8000" } }'
 
 curl -XGET "$CONFIG/sources"
 ```
@@ -95,7 +95,7 @@ test mode is config http on 8087, frontend http on 8088.
 CONFIG="$(hostname):8087"
 PUBLIC_SERVICE="$(hostname):8088"
 
-curl -XPUT -H"content-type: application/json" "$CONFIG/sources/bbc" -d '{"url":"http://feeds.bbci.co.uk/news/uk/rss.xml"}'
+curl -XPUT -H"content-type: application/json" "$CONFIG/sources/bbc" -d '{ "spec": { "url": "http://feeds.bbci.co.uk/news/uk/rss.xml" } }'
 
 curl "$PUBLIC_SERVICE/feed?query=asdasd"
 ```
