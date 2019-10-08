@@ -14,6 +14,7 @@ type gsrv struct {
 	listener net.Listener
 	cfgCh    chan *cfg
 	cfg      *cfg
+	store    *store
 	sched    *sched
 }
 
@@ -28,7 +29,8 @@ func makeGSrv(bind string) (*gsrv, error) {
 	}, nil
 }
 
-func (s *gsrv) Start(ctx context.Context, sched *sched) error {
+func (s *gsrv) Start(ctx context.Context, store *store, sched *sched) error {
+	s.store = store
 	s.sched = sched
 
 	select {
@@ -61,7 +63,7 @@ func (s *gsrv) Start(ctx context.Context, sched *sched) error {
 	return grp.Wait()
 }
 
-func (s *gsrv) GetServeWork(context.Context, *common.Nil) (*common.ServeWork, error) {
+func (s *gsrv) GetServeWork(context.Context, *common.ServeWorkRequest) (*common.ServeWork, error) {
 	feeds := make([]*common.ServeFeed, 0, len(s.cfg.Sources))
 
 	for i, src := range s.cfg.Sources {
@@ -78,10 +80,14 @@ func (s *gsrv) GetServeWork(context.Context, *common.Nil) (*common.ServeWork, er
 	return out, nil
 }
 
-func (s *gsrv) GetFetchWork(ctx context.Context, _ *common.Nil) (*common.FetchWork, error) {
+func (s *gsrv) GetFetchWork(ctx context.Context, _ *common.FetchWorkRequest) (*common.FetchWork, error) {
 	out, err := s.sched.getWork(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return &out, nil
+}
+
+func (s *gsrv) ReportFetchResult(ctx context.Context, req *common.FetchReport) (*common.Empty, error) {
+	return nil, s.store.Update([]interface{}{*req})
 }

@@ -24,37 +24,69 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-// Nil is nil
-type Nil struct {
+// Empty is empty
+type Empty struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Nil) Reset()         { *m = Nil{} }
-func (m *Nil) String() string { return proto.CompactTextString(m) }
-func (*Nil) ProtoMessage()    {}
-func (*Nil) Descriptor() ([]byte, []int) {
+func (m *Empty) Reset()         { *m = Empty{} }
+func (m *Empty) String() string { return proto.CompactTextString(m) }
+func (*Empty) ProtoMessage()    {}
+func (*Empty) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3eaf2c85e69e9ea4, []int{0}
 }
 
-func (m *Nil) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Nil.Unmarshal(m, b)
+func (m *Empty) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Empty.Unmarshal(m, b)
 }
-func (m *Nil) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Nil.Marshal(b, m, deterministic)
+func (m *Empty) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Empty.Marshal(b, m, deterministic)
 }
-func (m *Nil) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Nil.Merge(m, src)
+func (m *Empty) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Empty.Merge(m, src)
 }
-func (m *Nil) XXX_Size() int {
-	return xxx_messageInfo_Nil.Size(m)
+func (m *Empty) XXX_Size() int {
+	return xxx_messageInfo_Empty.Size(m)
 }
-func (m *Nil) XXX_DiscardUnknown() {
-	xxx_messageInfo_Nil.DiscardUnknown(m)
+func (m *Empty) XXX_DiscardUnknown() {
+	xxx_messageInfo_Empty.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Nil proto.InternalMessageInfo
+var xxx_messageInfo_Empty proto.InternalMessageInfo
+
+// ServeWorkRequest requests serve work
+type ServeWorkRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ServeWorkRequest) Reset()         { *m = ServeWorkRequest{} }
+func (m *ServeWorkRequest) String() string { return proto.CompactTextString(m) }
+func (*ServeWorkRequest) ProtoMessage()    {}
+func (*ServeWorkRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{1}
+}
+
+func (m *ServeWorkRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ServeWorkRequest.Unmarshal(m, b)
+}
+func (m *ServeWorkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ServeWorkRequest.Marshal(b, m, deterministic)
+}
+func (m *ServeWorkRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ServeWorkRequest.Merge(m, src)
+}
+func (m *ServeWorkRequest) XXX_Size() int {
+	return xxx_messageInfo_ServeWorkRequest.Size(m)
+}
+func (m *ServeWorkRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ServeWorkRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ServeWorkRequest proto.InternalMessageInfo
 
 // ServeWork is a collection of data sources
 type ServeWork struct {
@@ -68,7 +100,7 @@ func (m *ServeWork) Reset()         { *m = ServeWork{} }
 func (m *ServeWork) String() string { return proto.CompactTextString(m) }
 func (*ServeWork) ProtoMessage()    {}
 func (*ServeWork) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3eaf2c85e69e9ea4, []int{1}
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{2}
 }
 
 func (m *ServeWork) XXX_Unmarshal(b []byte) error {
@@ -109,7 +141,7 @@ func (m *ServeFeed) Reset()         { *m = ServeFeed{} }
 func (m *ServeFeed) String() string { return proto.CompactTextString(m) }
 func (*ServeFeed) ProtoMessage()    {}
 func (*ServeFeed) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3eaf2c85e69e9ea4, []int{2}
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{3}
 }
 
 func (m *ServeFeed) XXX_Unmarshal(b []byte) error {
@@ -144,6 +176,38 @@ func (m *ServeFeed) GetStore() string {
 	return ""
 }
 
+// FetchWorkRequest requests serve work
+type FetchWorkRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *FetchWorkRequest) Reset()         { *m = FetchWorkRequest{} }
+func (m *FetchWorkRequest) String() string { return proto.CompactTextString(m) }
+func (*FetchWorkRequest) ProtoMessage()    {}
+func (*FetchWorkRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{4}
+}
+
+func (m *FetchWorkRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_FetchWorkRequest.Unmarshal(m, b)
+}
+func (m *FetchWorkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_FetchWorkRequest.Marshal(b, m, deterministic)
+}
+func (m *FetchWorkRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FetchWorkRequest.Merge(m, src)
+}
+func (m *FetchWorkRequest) XXX_Size() int {
+	return xxx_messageInfo_FetchWorkRequest.Size(m)
+}
+func (m *FetchWorkRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_FetchWorkRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FetchWorkRequest proto.InternalMessageInfo
+
 // FetchWork tells a fetcher all its jobs.
 type FetchWork struct {
 	Jobs                 []*FetchJob `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
@@ -156,7 +220,7 @@ func (m *FetchWork) Reset()         { *m = FetchWork{} }
 func (m *FetchWork) String() string { return proto.CompactTextString(m) }
 func (*FetchWork) ProtoMessage()    {}
 func (*FetchWork) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3eaf2c85e69e9ea4, []int{3}
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{5}
 }
 
 func (m *FetchWork) XXX_Unmarshal(b []byte) error {
@@ -198,7 +262,7 @@ func (m *FetchJob) Reset()         { *m = FetchJob{} }
 func (m *FetchJob) String() string { return proto.CompactTextString(m) }
 func (*FetchJob) ProtoMessage()    {}
 func (*FetchJob) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3eaf2c85e69e9ea4, []int{4}
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{6}
 }
 
 func (m *FetchJob) XXX_Unmarshal(b []byte) error {
@@ -240,33 +304,88 @@ func (m *FetchJob) GetStore() string {
 	return ""
 }
 
+// FetchReport says how a fetch went
+type FetchReport struct {
+	ID                   string   `protobuf:"bytes,1,opt,name=ID,proto3" json:"ID,omitempty"`
+	Status               string   `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *FetchReport) Reset()         { *m = FetchReport{} }
+func (m *FetchReport) String() string { return proto.CompactTextString(m) }
+func (*FetchReport) ProtoMessage()    {}
+func (*FetchReport) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3eaf2c85e69e9ea4, []int{7}
+}
+
+func (m *FetchReport) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_FetchReport.Unmarshal(m, b)
+}
+func (m *FetchReport) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_FetchReport.Marshal(b, m, deterministic)
+}
+func (m *FetchReport) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FetchReport.Merge(m, src)
+}
+func (m *FetchReport) XXX_Size() int {
+	return xxx_messageInfo_FetchReport.Size(m)
+}
+func (m *FetchReport) XXX_DiscardUnknown() {
+	xxx_messageInfo_FetchReport.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FetchReport proto.InternalMessageInfo
+
+func (m *FetchReport) GetID() string {
+	if m != nil {
+		return m.ID
+	}
+	return ""
+}
+
+func (m *FetchReport) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
 func init() {
-	proto.RegisterType((*Nil)(nil), "common.Nil")
+	proto.RegisterType((*Empty)(nil), "common.Empty")
+	proto.RegisterType((*ServeWorkRequest)(nil), "common.ServeWorkRequest")
 	proto.RegisterType((*ServeWork)(nil), "common.ServeWork")
 	proto.RegisterType((*ServeFeed)(nil), "common.ServeFeed")
+	proto.RegisterType((*FetchWorkRequest)(nil), "common.FetchWorkRequest")
 	proto.RegisterType((*FetchWork)(nil), "common.FetchWork")
 	proto.RegisterType((*FetchJob)(nil), "common.FetchJob")
+	proto.RegisterType((*FetchReport)(nil), "common.FetchReport")
 }
 
 func init() { proto.RegisterFile("config.proto", fileDescriptor_3eaf2c85e69e9ea4) }
 
 var fileDescriptor_3eaf2c85e69e9ea4 = []byte{
-	// 228 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x49, 0xce, 0xcf, 0x4b,
-	0xcb, 0x4c, 0xd7, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x4b, 0xce, 0xcf, 0xcd, 0xcd, 0xcf,
-	0x53, 0x62, 0xe5, 0x62, 0xf6, 0xcb, 0xcc, 0x51, 0x32, 0xe1, 0xe2, 0x0c, 0x4e, 0x2d, 0x2a, 0x4b,
-	0x0d, 0xcf, 0x2f, 0xca, 0x16, 0x52, 0xe7, 0x62, 0x4d, 0x4b, 0x4d, 0x4d, 0x29, 0x96, 0x60, 0x54,
-	0x60, 0xd6, 0xe0, 0x36, 0x12, 0xd4, 0x83, 0xa8, 0xd5, 0x03, 0xab, 0x70, 0x4b, 0x4d, 0x4d, 0x09,
-	0x82, 0xc8, 0x2b, 0x19, 0x42, 0x75, 0x81, 0xc4, 0x84, 0xf8, 0xb8, 0x98, 0x3c, 0x5d, 0x24, 0x18,
-	0x15, 0x18, 0x35, 0x38, 0x83, 0x98, 0x3c, 0x5d, 0x84, 0x44, 0xb8, 0x58, 0x8b, 0x4b, 0xf2, 0x8b,
-	0x52, 0x25, 0x98, 0xc1, 0x42, 0x10, 0x0e, 0x48, 0x8b, 0x5b, 0x6a, 0x49, 0x72, 0x06, 0xd8, 0x22,
-	0x15, 0x2e, 0x96, 0xac, 0xfc, 0x24, 0x98, 0x3d, 0x02, 0x30, 0x7b, 0xc0, 0x0a, 0xbc, 0xf2, 0x93,
-	0x82, 0xc0, 0xb2, 0x4a, 0x4e, 0x5c, 0x1c, 0x30, 0x11, 0x0c, 0x4b, 0x04, 0xb8, 0x98, 0x43, 0x83,
-	0x7c, 0x24, 0x98, 0xc0, 0x02, 0x20, 0x26, 0x76, 0x6b, 0x8d, 0x72, 0xb8, 0xd8, 0x9c, 0xc1, 0xde,
-	0x17, 0x32, 0xe0, 0xe2, 0x71, 0x4f, 0x2d, 0x41, 0x78, 0x96, 0x1b, 0x66, 0xab, 0x5f, 0x66, 0x8e,
-	0x14, 0xaa, 0x57, 0x41, 0xf2, 0x4a, 0x0c, 0x50, 0x1d, 0x08, 0x57, 0x63, 0xd7, 0x01, 0x97, 0x57,
-	0x62, 0x48, 0x62, 0x03, 0x87, 0xb1, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x6e, 0xc4, 0xf3, 0x69,
-	0x73, 0x01, 0x00, 0x00,
+	// 299 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0x4d, 0x4f, 0x83, 0x40,
+	0x10, 0x2d, 0x45, 0x50, 0xa6, 0xd5, 0xc0, 0x6a, 0xcc, 0xa6, 0xa7, 0x66, 0x63, 0x62, 0x4f, 0x24,
+	0xad, 0x7a, 0xf0, 0xe0, 0x45, 0x6b, 0x4d, 0x8d, 0xa7, 0x35, 0xc6, 0xb3, 0xd0, 0xa9, 0x9f, 0x74,
+	0x91, 0x5d, 0x4c, 0xfc, 0x79, 0xfe, 0x33, 0xc3, 0x2e, 0xd0, 0x12, 0xf4, 0xb6, 0xfb, 0xde, 0xcc,
+	0x7b, 0xf3, 0x26, 0x03, 0xfd, 0x58, 0xac, 0x96, 0xaf, 0xcf, 0x61, 0x9a, 0x09, 0x25, 0x88, 0x1b,
+	0x8b, 0x24, 0x11, 0x2b, 0xb6, 0x0d, 0xce, 0x75, 0x92, 0xaa, 0x6f, 0x46, 0xc0, 0xbf, 0xc7, 0xec,
+	0x0b, 0x1f, 0x45, 0xf6, 0xce, 0xf1, 0x33, 0x47, 0xa9, 0xd8, 0x29, 0x78, 0x35, 0x46, 0x8e, 0xc1,
+	0x59, 0x22, 0x2e, 0x24, 0xb5, 0x86, 0xf6, 0xa8, 0x37, 0x09, 0x42, 0xa3, 0x10, 0xea, 0x8a, 0x19,
+	0xe2, 0x82, 0x1b, 0x9e, 0x8d, 0xcb, 0xae, 0x02, 0x23, 0x7b, 0xd0, 0x9d, 0x4f, 0xa9, 0x35, 0xb4,
+	0x46, 0x1e, 0xef, 0xce, 0xa7, 0xe4, 0x00, 0x1c, 0xa9, 0x44, 0x86, 0xd4, 0xd6, 0x90, 0xf9, 0x14,
+	0xe6, 0x33, 0x54, 0xf1, 0xcb, 0xa6, 0xf9, 0x18, 0xbc, 0x1a, 0x23, 0x47, 0xb0, 0xf5, 0x26, 0xa2,
+	0xca, 0xdb, 0xaf, 0xbc, 0x75, 0xc1, 0xad, 0x88, 0xb8, 0x66, 0xd9, 0x25, 0xec, 0x54, 0x48, 0xcb,
+	0xd8, 0x07, 0xfb, 0x81, 0xdf, 0xd1, 0xae, 0x06, 0x8a, 0xe7, 0x3f, 0xa3, 0x9c, 0x41, 0x4f, 0x6b,
+	0x70, 0x4c, 0x45, 0xa6, 0x5a, 0x32, 0x87, 0xe0, 0x4a, 0xf5, 0xa4, 0x72, 0x59, 0x2a, 0x95, 0xbf,
+	0xc9, 0x8f, 0x05, 0xee, 0x95, 0x5e, 0x30, 0xb9, 0x80, 0xfe, 0x0d, 0xaa, 0xf5, 0xe2, 0x68, 0x63,
+	0x53, 0x1b, 0x11, 0x07, 0x41, 0x8b, 0x61, 0x9d, 0xb2, 0x7d, 0x1d, 0x9d, 0x36, 0xc2, 0xfe, 0xd9,
+	0x5e, 0x33, 0xac, 0x43, 0xce, 0x21, 0x30, 0xa3, 0x97, 0x29, 0x64, 0xfe, 0xa1, 0xc8, 0x7e, 0xa3,
+	0xd2, 0xf0, 0x83, 0xdd, 0x0a, 0x34, 0x07, 0xd0, 0x89, 0x5c, 0x7d, 0x1a, 0x27, 0xbf, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0x6b, 0x19, 0x75, 0x63, 0x2a, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -281,8 +400,9 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ConfigClient interface {
-	GetServeWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*ServeWork, error)
-	GetFetchWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*FetchWork, error)
+	GetServeWork(ctx context.Context, in *ServeWorkRequest, opts ...grpc.CallOption) (*ServeWork, error)
+	GetFetchWork(ctx context.Context, in *FetchWorkRequest, opts ...grpc.CallOption) (*FetchWork, error)
+	ReportFetchResult(ctx context.Context, in *FetchReport, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type configClient struct {
@@ -293,7 +413,7 @@ func NewConfigClient(cc *grpc.ClientConn) ConfigClient {
 	return &configClient{cc}
 }
 
-func (c *configClient) GetServeWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*ServeWork, error) {
+func (c *configClient) GetServeWork(ctx context.Context, in *ServeWorkRequest, opts ...grpc.CallOption) (*ServeWork, error) {
 	out := new(ServeWork)
 	err := c.cc.Invoke(ctx, "/common.Config/GetServeWork", in, out, opts...)
 	if err != nil {
@@ -302,7 +422,7 @@ func (c *configClient) GetServeWork(ctx context.Context, in *Nil, opts ...grpc.C
 	return out, nil
 }
 
-func (c *configClient) GetFetchWork(ctx context.Context, in *Nil, opts ...grpc.CallOption) (*FetchWork, error) {
+func (c *configClient) GetFetchWork(ctx context.Context, in *FetchWorkRequest, opts ...grpc.CallOption) (*FetchWork, error) {
 	out := new(FetchWork)
 	err := c.cc.Invoke(ctx, "/common.Config/GetFetchWork", in, out, opts...)
 	if err != nil {
@@ -311,21 +431,34 @@ func (c *configClient) GetFetchWork(ctx context.Context, in *Nil, opts ...grpc.C
 	return out, nil
 }
 
+func (c *configClient) ReportFetchResult(ctx context.Context, in *FetchReport, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/common.Config/ReportFetchResult", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConfigServer is the server API for Config service.
 type ConfigServer interface {
-	GetServeWork(context.Context, *Nil) (*ServeWork, error)
-	GetFetchWork(context.Context, *Nil) (*FetchWork, error)
+	GetServeWork(context.Context, *ServeWorkRequest) (*ServeWork, error)
+	GetFetchWork(context.Context, *FetchWorkRequest) (*FetchWork, error)
+	ReportFetchResult(context.Context, *FetchReport) (*Empty, error)
 }
 
 // UnimplementedConfigServer can be embedded to have forward compatible implementations.
 type UnimplementedConfigServer struct {
 }
 
-func (*UnimplementedConfigServer) GetServeWork(ctx context.Context, req *Nil) (*ServeWork, error) {
+func (*UnimplementedConfigServer) GetServeWork(ctx context.Context, req *ServeWorkRequest) (*ServeWork, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetServeWork not implemented")
 }
-func (*UnimplementedConfigServer) GetFetchWork(ctx context.Context, req *Nil) (*FetchWork, error) {
+func (*UnimplementedConfigServer) GetFetchWork(ctx context.Context, req *FetchWorkRequest) (*FetchWork, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFetchWork not implemented")
+}
+func (*UnimplementedConfigServer) ReportFetchResult(ctx context.Context, req *FetchReport) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportFetchResult not implemented")
 }
 
 func RegisterConfigServer(s *grpc.Server, srv ConfigServer) {
@@ -333,7 +466,7 @@ func RegisterConfigServer(s *grpc.Server, srv ConfigServer) {
 }
 
 func _Config_GetServeWork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Nil)
+	in := new(ServeWorkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -345,13 +478,13 @@ func _Config_GetServeWork_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/common.Config/GetServeWork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServer).GetServeWork(ctx, req.(*Nil))
+		return srv.(ConfigServer).GetServeWork(ctx, req.(*ServeWorkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Config_GetFetchWork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Nil)
+	in := new(FetchWorkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -363,7 +496,25 @@ func _Config_GetFetchWork_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/common.Config/GetFetchWork",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ConfigServer).GetFetchWork(ctx, req.(*Nil))
+		return srv.(ConfigServer).GetFetchWork(ctx, req.(*FetchWorkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Config_ReportFetchResult_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FetchReport)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConfigServer).ReportFetchResult(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/common.Config/ReportFetchResult",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConfigServer).ReportFetchResult(ctx, req.(*FetchReport))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -379,6 +530,10 @@ var _Config_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetFetchWork",
 			Handler:    _Config_GetFetchWork_Handler,
+		},
+		{
+			MethodName: "ReportFetchResult",
+			Handler:    _Config_ReportFetchResult_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

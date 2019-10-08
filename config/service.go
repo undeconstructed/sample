@@ -69,7 +69,7 @@ func (s *service) Start(ctx context.Context) error {
 		return sched.Start(gctx)
 	})
 	grp.Go(func() error {
-		return gsrvr.Start(gctx, sched)
+		return gsrvr.Start(gctx, store, sched)
 	})
 	grp.Go(func() error {
 		return hsrvr.Start(gctx, store)

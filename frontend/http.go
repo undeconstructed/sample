@@ -14,7 +14,7 @@ import (
 type hsrv struct {
 	listener net.Listener
 
-	index *ArticleIndex
+	index IndexQuerier
 }
 
 func makeHSrv(bind string) (*hsrv, error) {
@@ -27,7 +27,7 @@ func makeHSrv(bind string) (*hsrv, error) {
 	}, nil
 }
 
-func (s *hsrv) Start(ctx context.Context, index *ArticleIndex) error {
+func (s *hsrv) Start(ctx context.Context, index IndexQuerier) error {
 	s.index = index
 
 	router := gin.Default()

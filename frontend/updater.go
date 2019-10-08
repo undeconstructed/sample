@@ -21,7 +21,7 @@ type updater struct {
 
 	caches     feedCaches
 	lastUpdate time.Time
-	index      *ArticleIndex
+	index      IndexUpdater
 }
 
 func makeUpdater(configURL string) (*updater, error) {
@@ -31,7 +31,7 @@ func makeUpdater(configURL string) (*updater, error) {
 	}, nil
 }
 
-func (s *updater) Start(ctx context.Context, index *ArticleIndex) error {
+func (s *updater) Start(ctx context.Context, index IndexUpdater) error {
 	s.index = index
 
 	conn, err := grpc.Dial(s.configURL, grpc.WithInsecure())
@@ -65,7 +65,7 @@ func (s *updater) Start(ctx context.Context, index *ArticleIndex) error {
 
 // find out what sources exist
 func updateSources(ctx context.Context, config common.ConfigClient, oldCaches feedCaches) feedCaches {
-	work, err := config.GetServeWork(ctx, &common.Nil{})
+	work, err := config.GetServeWork(ctx, &common.ServeWorkRequest{})
 	if err != nil {
 		log.WithError(err).Error("Error getting source list")
 		return oldCaches

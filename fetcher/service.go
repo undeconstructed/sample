@@ -39,7 +39,7 @@ func (s *service) Start(ctx context.Context) error {
 
 	grp.Go(func() error {
 		for {
-			doFetch(gctx, config)
+			doWork(gctx, config)
 			select {
 			case <-gctx.Done():
 				return gctx.Err()
@@ -51,8 +51,8 @@ func (s *service) Start(ctx context.Context) error {
 	return grp.Wait()
 }
 
-func doFetch(ctx context.Context, config common.ConfigClient) {
-	work, err := config.GetFetchWork(ctx, &common.Nil{})
+func doWork(ctx context.Context, config common.ConfigClient) {
+	work, err := config.GetFetchWork(ctx, &common.FetchWorkRequest{})
 	if err != nil {
 		log.WithError(err).Error("Error getting work list")
 		// enforce a pause in a basic way
@@ -64,18 +64,39 @@ func doFetch(ctx context.Context, config common.ConfigClient) {
 	}
 
 	for _, job := range work.Jobs {
-		log.WithField("job", job).Info("Fetching")
-		feed, err := fetchFeed(ctx, job)
+		report := fetchAndStore(ctx, job)
+
+		_, err := config.ReportFetchResult(ctx, &report)
 		if err != nil {
-			log.WithError(err).Error("Error fetching")
-			continue
+			log.WithError(err).Error("Error reporting fetch")
 		}
-		err = storeFeed(ctx, job, feed)
-		if err != nil {
-			log.WithError(err).Error("Error storing")
-			continue
+	}
+}
+
+func fetchAndStore(ctx context.Context, job *common.FetchJob) common.FetchReport {
+	log.WithField("job", job).Info("Fetching")
+
+	feed, err := fetchFeed(ctx, job)
+	if err != nil {
+		log.WithError(err).Error("Error fetching")
+		return common.FetchReport{
+			ID:     job.ID,
+			Status: "fetch error",
 		}
-		// TODO - ack job done
+	}
+
+	err = storeFeed(ctx, job, feed)
+	if err != nil {
+		log.WithError(err).Error("Error storing")
+		return common.FetchReport{
+			ID:     job.ID,
+			Status: "store error",
+		}
+	}
+
+	return common.FetchReport{
+		ID:     job.ID,
+		Status: "ok",
 	}
 }
 

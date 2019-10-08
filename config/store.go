@@ -115,6 +115,13 @@ func (s *store) write(changes []interface{}) error {
 				c.Spec.Store = s.storeURL
 			}
 			cfg.Sources[c.ID] = c
+		case common.FetchReport:
+			if c0, exists := cfg.Sources[c.ID]; exists {
+				c0.Status = common.RestSourceStatus{
+					LastStatus: c.Status,
+				}
+				cfg.Sources[c.ID] = c0
+			}
 		}
 	}
 

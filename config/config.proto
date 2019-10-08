@@ -4,12 +4,18 @@ package common;
 
 // Config service
 service Config {
-  rpc GetServeWork (Nil) returns (ServeWork) {}
-  rpc GetFetchWork (Nil) returns (FetchWork) {}
+  rpc GetServeWork (ServeWorkRequest) returns (ServeWork) {}
+  rpc GetFetchWork (FetchWorkRequest) returns (FetchWork) {}
+  rpc ReportFetchResult (FetchReport) returns (Empty) {}
 }
 
-// Nil is nil
-message Nil {}
+// Empty is empty
+message Empty {
+}
+
+// ServeWorkRequest requests serve work
+message ServeWorkRequest {
+}
 
 // ServeWork is a collection of data sources
 message ServeWork {
@@ -22,6 +28,10 @@ message ServeFeed {
   string store = 3;
 }
 
+// FetchWorkRequest requests serve work
+message FetchWorkRequest {
+}
+
 // FetchWork tells a fetcher all its jobs.
 message FetchWork {
   repeated FetchJob jobs = 1;
@@ -32,4 +42,10 @@ message FetchJob {
   string ID = 1;
   string URL = 2;
   string store = 3;
+}
+
+// FetchReport says how a fetch went
+message FetchReport {
+  string ID = 1;
+  string status = 2;
 }
