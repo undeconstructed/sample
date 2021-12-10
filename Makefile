@@ -2,7 +2,7 @@
 IMAGE_NAME=sample-1
 
 run:
-	go run github.com/undeconstructed/sample/sample test
+	go run github.com/undeconstructed/sample/sample testmode
 
 gen:
 	go generate
